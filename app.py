@@ -197,6 +197,6 @@ if __name__ == "__main__":
     # clear_log_tables() # run this to clear all logs tables
     # clear_everything() # run this to clear everything
     # Initialize scheduler:
-    # run_scheduler() # run this to start the scheduler in the background
+    run_scheduler() # run this to start the scheduler in the background
     initialize_app()
     app.run(host="0.0.0.0", port=10234, debug=True)

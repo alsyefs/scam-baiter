@@ -66,8 +66,6 @@ def signin():
             password = request.form.get('password')
             user_exists = User.query.filter_by(username=username).first()
             if user_exists:
-                password_match = check_password_hash(user_exists.password_hash, password)
-                log.info(f"password_match?: {password_match}")
                 if check_password_hash(user_exists.password_hash, password):
                     log.info(f"Successful login for '{username}'")
                     session['username'] = username
