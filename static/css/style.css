@@ -1,0 +1,50 @@
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.table td, .table th {
+    word-break: break-all;
+}
+
+.navbar {
+    z-index: 1030;
+  }
+  
+  .dropdown-menu {
+    z-index: 1040;
+  }
+.d-flex {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* This sets the spacing between items */
+}
+.d-flex .form-check {
+    margin-bottom: 0; /* Override default margins if necessary */
+}
+.dot {
+    height: 10px;
+    width: 10px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+  }
+h1 {
+    border: 2px #eee solid;
+    color: brown;
+    text-align: center;
+    padding: 10px;
+}
+#spinnerWrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+}

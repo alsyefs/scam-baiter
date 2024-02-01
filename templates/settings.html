@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <h5>Settings</h5>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>Cron state</th>
+                        <th>Last update</th>
+                    </tr>
+                </thead>
+                <tbody id="settings-table-body">
+                    <tr id="loading-message">
+                        <td colspan="3" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="form-group">
+            <label for="cronStateSelect">Cron State:</label>
+            <select class="form-control" id="cronStateSelect">
+                <option value="running">Running</option>
+                <option value="stopped">Stopped</option>
+                <option value="run_once">Run Once</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" onclick="updateCronState()">Update Cron State</button>
+    </div>
+</div>
+<script>
+    function updateCronState() {
+        var cronState = document.getElementById('cronStateSelect').value;
+        var settingsUpdateDatetime = new Date().toISOString();
+
+        fetch('/update_cron_state', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ cron_state: cronState })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            loadSettings(); // Reload the settings after update
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function loadSettings() {
+        fetch('/get_settings')
+            .then(response => response.json())
+            .then(settings => {
+                var settingsTableBody = document.getElementById('settings-table-body');
+                settingsTableBody.innerHTML = '';
+                settings.forEach(function(setting) {
+                    var row = `<tr>
+                        <td>${setting.id}</td>
+                        <td>${setting.cron_state}</td>
+                        <td>${setting.settings_update_datetime}</td>
+                    </tr>`;
+                    settingsTableBody.innerHTML += row;
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSettings();
+    });
+</script>
+
+{% endblock %}

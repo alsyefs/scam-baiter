@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}GPT{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-md-4">
+      <h5>1 - SYSTEM</h5>
+      <textarea id="system-instructions" class="form-control mb-4" rows="4" placeholder="GPT instructions here. Instruct GPT to behave the way you need."></textarea>
+      
+      <h5>2 - USER</h5>
+      <textarea id="user-input" class="form-control mb-4" rows="4" placeholder="Prompt message here. Ask GPT something..."></textarea>
+    </div>
+    <div class="col-md-8">
+      <h5>3 - Model Settings</h5>
+      <div class="form-group">
+        <label for="modelSelect">Model</label>
+        <select class="form-select form-select-sm" id="modelSelect">
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+          <option value="gpt-4">gpt-4</option>
+          <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
+          <option value="gpt-4-vision-preview">gpt-4-vision-preview</option>
+          <!-- "gpt-3.5-turbo" # 4,096 tokens -->
+          <!-- "gpt-4" # 8,192 tokens -->
+          <!-- "gpt-4-1106-preview" # 128,000 tokens -->
+          <!-- "gpt-4-vision-preview" # 128,000 tokens -->
+        </select>
+        
+        <div class="form-group row">
+            <label for="temperature" class="col-sm-4 col-form-label">Temperature</label>
+            <div class="col-sm-6">
+                <input type="range" class="form-control-range" id="temperature" min="0" max="1" step="0.01" value="0.7">
+            </div>
+            <div class="col-sm-2">
+                <input type="number" id="temperatureValue" class="form-control form-control-sm" value="0.7" min="0" max="1" step="0.01">
+            </div>
+        </div>
+        
+
+        <div class="form-group row">
+            <label for="maxLength" class="col-sm-4 col-form-label">Maximum Length</label>
+            <div class="col-sm-6">
+                <input type="range" class="form-control-range" id="maxLength" min="1" max="4096" step="1" value="256">
+            </div>
+            <div class="col-sm-2">
+                <input type="number" id="maxLengthValue" class="form-control form-control-sm" value="256" min="1" max="4096" step="1">
+            </div>
+        </div>
+
+        <label for="stopSequences">Stop Sequences</label>
+        <input type="text" class="form-control mb-3" id="stopSequences" placeholder="Enter stop sequences separated by commas">
+
+
+        <div class="form-group row">
+            <label for="topP" class="col-sm-4 col-form-label">Top P</label>
+            <div class="col-sm-6">
+                <input type="range" class="form-control-range" id="topP" min="0" max="1" step="0.01" value="1">
+            </div>
+            <div class="col-sm-2">
+                <input type="number" id="topPValue" class="form-control form-control-sm" value="1" min="0" max="1" step="0.01">
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="frequencyPenalty" class="col-sm-4 col-form-label">Frequency Penalty</label>
+            <div class="col-sm-6">
+                <input type="range" class="form-control-range" id="frequencyPenalty" min="0" max="2" step="0.01" value="0">
+            </div>
+            <div class="col-sm-2">
+                <input type="number" id="frequencyPenaltyValue" class="form-control form-control-sm" value="0" min="0" max="2" step="0.01">
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="presencePenalty" class="col-sm-4 col-form-label">Presence Penalty</label>
+            <div class="col-sm-6">
+                <input type="range" class="form-control-range" id="presencePenalty" min="0" max="2" step="0.01" value="0">
+            </div>
+            <div class="col-sm-2">
+                <input type="number" id="presencePenaltyValue" class="form-control form-control-sm" value="0" min="0" max="2" step="0.01">
+            </div>
+        </div>
+      </div>
+      
+      <br>
+      <button id="submit-message" class="btn btn-primary">4 - Submit</button>
+      <br><br>
+      <h5>Response</h5>
+      <textarea id="chat-response" class="form-control mb-4" rows="10" disabled></textarea>
+    </div>
+  </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function syncInputAndSlider(sliderId, inputId) {
+            var slider = document.getElementById(sliderId);
+            var input = document.getElementById(inputId);
+            slider.addEventListener('input', function() {
+                input.value = slider.value;
+            });
+            input.addEventListener('input', function() {
+                if (this.value > parseFloat(slider.max)) this.value = slider.max;
+                if (this.value < parseFloat(slider.min)) this.value = slider.min;
+                slider.value = this.value;
+            });
+        }
+        syncInputAndSlider('temperature', 'temperatureValue');
+        syncInputAndSlider('maxLength', 'maxLengthValue');
+        syncInputAndSlider('topP', 'topPValue');
+        syncInputAndSlider('frequencyPenalty', 'frequencyPenaltyValue');
+        syncInputAndSlider('presencePenalty', 'presencePenaltyValue');
+        document.getElementById('submit-message').addEventListener('click', function() {
+            var userInput = document.getElementById('user-input').value;
+            var systemInstructions = document.getElementById('system-instructions').value;
+            var model = document.getElementById('modelSelect').value;
+            var temperature = document.getElementById('temperature').value;
+            var maxLength = document.getElementById('maxLength').value;
+            var stopSequences = document.getElementById('stopSequences').value.split(',').map(s => s.trim()).filter(Boolean);
+            var topP = document.getElementById('topP').value;
+            var frequencyPenalty = document.getElementById('frequencyPenalty').value;
+            var presencePenalty = document.getElementById('presencePenalty').value;
+            if (userInput.trim() !== '') {
+                var requestBody = {
+                    user_input: userInput,
+                    system_instructions: systemInstructions,
+                    model: model,
+                    temperature: parseFloat(temperature),
+                    max_length: parseInt(maxLength),
+                    top_p: parseFloat(topP),
+                    frequency_penalty: parseFloat(frequencyPenalty),
+                    presence_penalty: parseFloat(presencePenalty)
+                };
+                if (stopSequences.length > 0) {
+                    console.log(stopSequences);
+                    requestBody.stop_sequences = stopSequences;
+                }
+                fetch('/generate_text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    var chatResponse = document.getElementById('chat-response');
+                    chatResponse.innerHTML = data.response || "No response generated.";
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+    });
+    </script>
+{% endblock %}

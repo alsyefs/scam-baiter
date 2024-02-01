@@ -1,0 +1,6 @@
+{
+    "editor.inlineSuggest.showToolbar": "onHover",
+    "python.analysis.extraPaths": [
+        "./backend"
+    ]
+}

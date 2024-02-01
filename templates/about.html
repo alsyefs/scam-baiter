@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} About {% endblock %}</h1>
+    <p>
+        Under maintenance...
+    </p>
+    For support, email: <a id="support-email" href=""></a>
+
+<script>
+function getSupportEmail() {
+    fetch('/get_support_email')
+    .then(response => response.json())
+    .then(data => {
+        var email = document.getElementById('support-email');
+        email.innerHTML = data.support_email;
+        email.href = 'mailto:' + data.support_email;
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    getSupportEmail();
+});
+</script>
+
+{% endblock %}

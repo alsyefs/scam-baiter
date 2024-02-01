@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<h2>Users List</h2>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+<form method="post" action="{{ url_for('users.update_role') }}">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Actions</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Clear password</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>
+                    <select name="role_{{ user.id }}">
+                        {% for role in all_roles %}
+                            <option value="{{ role.id }}" {% if role.name in user.roles %}selected{% endif %}>
+                                {{ role.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <button type="submit" name="update_role" value="{{ user.id }}" class="btn btn-primary">
+                        Update Role
+                    </button>
+                </td>
+                <td>{{ user.created }}</td>
+                <td>{{ user.updated }}</td>
+                <td>
+                    <form action="{{ url_for('users.clear_password') }}" method="post">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        <button type="submit" class="btn btn-primary">Set Password to '123'</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+{% endblock %}

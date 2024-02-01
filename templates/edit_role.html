@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Role{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2>Edit Role for {{ user.username }}</h2>
+        <form method="post">
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select class="form-control" id="role" name="role">
+                    {% for role in roles %}
+                        <option value="{{ role.id }}" {% if role in user.roles %}selected{% endif %}>{{ role.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Role</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
