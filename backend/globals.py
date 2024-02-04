@@ -50,6 +50,10 @@ READ_INBOX = os.path.join(BASE_DIR, "emails", "read")  # emails read
 UNREAD_INBOX = os.path.join(BASE_DIR, "emails", "unread")  # new emails
 EMAIL_TEMPLATE = os.path.join(BASE_DIR, "emailing_service", "template.html")  # email template
 MAILGUN_TARGET_EMAIL_TEST = MAILGUN_TARGET_EMAIL_TEST # Email for testing to be removed in production.
+UNIQUE_EMAIL_QUEUED = os.path.join(BASE_DIR, "emails", "emails_queued.txt")
+UNIQUE_EMAIL_QUEUED_DUPLICATE = os.path.join(BASE_DIR, "emails", "emails_queued_duplicate.txt")
+EMAIL_ARCHIVED_CLEANED_DIR = os.path.join(BASE_DIR, "emails", "archive_cleaned")
+EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations")
 
 # Text-to-speech handling
 TTS_MP3_PATH = os.path.join(BASE_DIR, 'data', 'audio_files', "tts.mp3")  # text-to-speech mp3 file
