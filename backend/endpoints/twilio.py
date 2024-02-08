@@ -11,9 +11,17 @@ from backend import twilio
 from backend.responder.Chatgpt_Replier import gen_text1, gen_text2, gen_text3
 from database.sms_table import SmsDatabaseManager
 from backend.responder.tts import set_mp3_from_text
+from backend.elevenlabs.tts_ai import text_to_speech_mp3
+# from backend.models.tts.tts_coqui_model import tts_coqui
+from backend.models.tts.tts_openai_model import tts_openai
 from globals import TTS_MP3_PATH
+import random
 
 speaker_voice = 'Polly.Matthew-Neural'
+selected_voice_accent = 1
+selected_voice_gender = 1
+selected_voice_age = 2
+
 twilio_bp = Blueprint('twilio', __name__)
 def requires_roles(*roles):
     def wrapper(f):
@@ -31,7 +39,6 @@ def requires_roles(*roles):
             return redirect(url_for('index'))
         return decorated_function
     return wrapper
-
 @twilio_bp.route('/twilio')
 @requires_roles('admin', 'super admin')
 def index():
@@ -51,7 +58,6 @@ def twilio_errors():
         log.error("An error occurred: %s", str(e))
         log.error("", traceback.format_exc())
         return "An error occurred: %s" % str(e)
-    
 @twilio_bp.route("/incoming_sms", methods=['GET', 'POST'])
 def incoming_sms():
     try:
@@ -94,6 +100,7 @@ def incoming_sms_failed():
         log.error("An error occurred: %s", str(e))
         log.error("", traceback.format_exc())
         return "An error occurred: %s" % str(e)
+    
 @twilio_bp.route("/make_call", methods=['POST'])
 def make_call():
     try:
@@ -111,11 +118,20 @@ def call_handler():
         gather = Gather(input='speech', action='/handle_ongoing_call')
         if 'greeted' not in session:
             log.info(f"Ongoing call started from: ({request.values.get('From', None)}), to: ({request.values.get('To', None)}).")
-            # gather.say("Hello!", voice=speaker_voice)
-            set_mp3_from_text("Hello!")
+            session['selected_voice_gender'] = random.choice([1, 2])  # 1: male, 2: female
+            session['selected_voice_accent'] = random.choice(['us', 'uk'])  # 1: British, 2: American
+            # session['selected_voice_accent'] = random.choice([1, 2])  # 1: British, 2: American
+            # session['selected_voice_age'] = random.choice([1, 2, 3])  # 1: young, 2: middle aged, 3: old
+            # # # gather.say("Hello!", voice=speaker_voice)
+            # set_mp3_from_text("Hello!") # gTTS
+            # text_to_speech_mp3("Hello!", session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
+            tts_openai("Hello!", session['selected_voice_gender'], session['selected_voice_accent'])
             gather.play('/tts_play')
-
             session['greeted'] = True
+            
+            # if(tts_coqui("Hello!")):
+            #     gather.play('/tts_play')
+            #     session['greeted'] = True
         response.append(gather)
         return Response(str(response), mimetype='text/xml')
     except Exception as e:
@@ -138,22 +154,33 @@ def handle_ongoing_call():
     log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Received voice input: ({received_voice_input}).")
     response = VoiceResponse()
     if received_voice_input.lower() == 'end call':
-        # response.say("Ending call now. Goodbye!", voice=speaker_voice)
-        set_mp3_from_text("Ending call now. Goodbye!")
+        # # response.say("Ending call now. Goodbye!", voice=speaker_voice)
+        # set_mp3_from_text("Ending call now. Goodbye!") # gTTS
+        tts_openai("Ending call now. Goodbye!", session['selected_voice_gender'], session['selected_voice_accent'])
+        # text_to_speech_mp3("Ending call now. Goodbye!", session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
         response.play('/tts_play')
+        # if(tts_coqui("Ending call now. Goodbye!")):
+        #     response.play('/tts_play')
         log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Ending call with the command: (end call).")
     elif received_voice_input:
         generated_response = gen_text3(received_voice_input)
-        # response.say(generated_response, voice=speaker_voice)
-        set_mp3_from_text(generated_response)
+        # # response.say(generated_response, voice=speaker_voice)
+        # set_mp3_from_text(generated_response) # gTTS
+        tts_openai(generated_response, session['selected_voice_gender'], session['selected_voice_accent'])
+        # text_to_speech_mp3(generated_response, session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
         response.play('/tts_play')
-
+        # if(tts_coqui(generated_response)):
+        #     response.play('/tts_play')
         log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Generated voice response: ({generated_response}).")
         response.redirect('/ongoing_call')
     else:
-        # response.say("Sorry, I did not catch that. Please try again.", voice=speaker_voice)
-        set_mp3_from_text("Sorry, I did not catch that. Please try again.")
+        # # response.say("Sorry, I did not catch that. Please try again.", voice=speaker_voice)
+        # set_mp3_from_text("Sorry, I did not catch that. Please try again.") # gTTS
+        tts_openai("Sorry, I did not catch that. Please try again.", session['selected_voice_gender'], session['selected_voice_accent'])
+        # text_to_speech_mp3("Sorry, I did not catch that. Please try again.", session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
         response.play('/tts_play')
+        # if(tts_coqui("Sorry, I did not catch that. Please try again.")):
+        #     response.play('/tts_play')
         log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Caller did not say anything.")
     new_call_conversation = CallConversations(
                 from_number=request.values.get('From', None),
@@ -170,7 +197,7 @@ def handle_ongoing_call():
 @twilio_bp.route("/ongoing_call_failed", methods=['POST'])
 def ongoing_call_failed():
     try:
-        log.info(f"Ongoing call failed from: ({request.values.get('From', None)}), to: ({request.values.get('To', None)}).")
+        log.error(f"Ongoing call failed from: ({request.values.get('From', None)}), to: ({request.values.get('To', None)}).")
         return "Ongoing call failed."
     except Exception as e:
         log.error("An error occurred: %s", str(e))

@@ -4,7 +4,7 @@ from secret import (
     DEFAULT_SUPER_ADMIN_PASSWORD, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
     TWILIO_CALL_URL, TWILIO_PHONE_NUMBERS, DEFAULT_USER_USERNAME,
     DEFAULT_USER_PASSWORD, DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD,
-    MAILGUN_TARGET_EMAIL_TEST
+    MAILGUN_TARGET_EMAIL_TEST, ELEVENLABS_API_KEY
 )
 import logging
 import os
@@ -57,12 +57,15 @@ EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR = os.path.join(BASE_DIR, "emails", "arc
 
 # Text-to-speech handling
 TTS_MP3_PATH = os.path.join(BASE_DIR, 'data', 'audio_files', "tts.mp3")  # text-to-speech mp3 file
+SPEAKER_WAV = os.path.join(BASE_DIR, 'data', 'audio_files', 'clone_from', "us_male_saleh.wav")  # text-to-speech model file
 
 # OpenAI GPT
 MAX_TOKENS = 4096  # max tokens for GPT-4
-# GPT_MODEL = "gpt-3.5-turbo"  # 4,096 tokens
+GPT_MODEL = "gpt-3.5-turbo"  # 4,096 tokens
 # GPT_MODEL = "gpt-3.5-turbo-1106"  # 4,096 tokens
-GPT_MODEL = "gpt-4"  # 8,192 tokens
+
+# GPT_MODEL = "gpt-4"  # 8,192 tokens
+
 ## GPT_MODEL = "gpt-4.0-turbo"  # 8,192 tokens # This does not work!
 # GPT_MODEL = "gpt-4-1106-preview"  # 128,000 tokens
 # GPT_MODEL = "gpt-4-vision-preview"  # 128,000 tokens
@@ -70,15 +73,12 @@ OPENAI_API_KEY = OPENAI_API_KEY
 GPT_CHAT_1_INSTRUCTIONS = """You are a dull person and gullible person who is easy to persuade.
 You want to share information. Do not call them a scam. Keep conversation going.
 Ask follow-up questions. Do not give any personal information. Greet them in the start."""
-
 GPT_CHAT_2_INSTRUCTIONS = """You are good at pattern following.
 You are a person and not a language model. Do not call them a scam."""
-
 GPT_CHAT_3_INSTRUCTIONS = """You are a dull person and gullible person who is easy to persuade.
 You want to share information. Do not call them a scam. Keep conversation going.
 Ask follow-up questions. Do not give any personal information. Reply with short sentences.
 You are a person and not a language model."""
-
 GPT_STOP_SEQUENCES = ["I am an AI", "I'm an AI", "AI", "As an artificial"]
 GPT_PRESENCE_PENALTY = 0.5
 GPT_FREQUENCY_PENALTY = 0.5
@@ -109,3 +109,7 @@ TWILIO_ACCOUNT_SID = TWILIO_ACCOUNT_SID
 TWILIO_AUTH_TOKEN = TWILIO_AUTH_TOKEN
 TWILIO_PHONE_NUMBERS = TWILIO_PHONE_NUMBERS
 TWILIO_CALL_URL = TWILIO_CALL_URL
+
+# ElevenLabs
+ELEVENLABS_API_KEY = ELEVENLABS_API_KEY
+ELEVENLABS_PREMADE_VOICES = os.path.join(BASE_DIR, "elevenlabs", "elevenlabs_voices.json")
