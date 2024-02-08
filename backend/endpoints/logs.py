@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, session, redirect, url_for, flash, Response
+from flask import Blueprint, jsonify, request, render_template, session, redirect, url_for, flash, Response
 from functools import wraps
 from logs import LogManager
 log = LogManager.get_logger()
@@ -68,3 +68,56 @@ def get_logs():
         log.error("An error occurred: %s", str(e))
         log.error("", traceback.format_exc())
         return Response("An error occurred: %s" % str(e), mimetype='application/json')
+    
+    
+@logs_bp.route("/get_logs_pages", methods=['GET'])
+@requires_roles('admin', 'super admin')
+def get_logs_pages():
+    try:
+        log_level = request.args.get('logLevel', None)
+        page = request.args.get('page', default=1, type=int)
+        table_mapping = {
+            'DEBUG': DEBUGGING_LOGS_TABLE_NAME,
+            'INFO': INFO_LOGS_TABLE_NAME,
+            'WARNING': WARNING_LOGS_TABLE_NAME,
+            'ERROR': ERROR_LOGS_TABLE_NAME,
+            'CRITICAL': CRITICAL_LOGS_TABLE_NAME,
+            'NOTSET': NOTSET_LOGS_TABLE_NAME
+        }
+        table_name = table_mapping.get(log_level, None)
+        if log_level and table_name:
+            logs_list = LogsDatabaseManager.select_logs_by_level_pages(log_level, table_name, page=page, per_page=100)
+            logs_json = [{'id': log[0], 'level': log[1], 'message': log[2], 'date': log[3], 'time': log[4], 'file_name': log[5]} for log in logs_list]
+            return jsonify(logs_json)
+        else:
+            return jsonify({'error': 'Invalid or no log level provided.'}), 400
+    except Exception as e:
+        log.error("An error occurred: %s", str(e))
+        log.error("", traceback.format_exc())
+        return jsonify({'error': 'An error occurred while fetching logs.'}), 500
+    
+@logs_bp.route('/get_logs_count')
+@requires_roles('admin', 'super admin')
+def get_logs_count():
+    try:
+        log_level = request.args.get('logLevel', None)
+        if log_level:
+            table_mapping = {
+                'DEBUG': DEBUGGING_LOGS_TABLE_NAME,
+                'INFO': INFO_LOGS_TABLE_NAME,
+                'WARNING': WARNING_LOGS_TABLE_NAME,
+                'ERROR': ERROR_LOGS_TABLE_NAME,
+                'CRITICAL': CRITICAL_LOGS_TABLE_NAME,
+                'NOTSET': NOTSET_LOGS_TABLE_NAME
+            }
+            table_name = table_mapping.get(log_level)
+            if table_name:
+                total_logs = LogsDatabaseManager.get_logs_count(log_level, table_name)
+                return jsonify({'total_logs': total_logs}), 200
+            else:
+                return jsonify({'error': 'Invalid log level provided.'}), 400
+        else:
+            return jsonify({'error': 'No log level provided.'}), 400
+    except Exception as e:
+        log.error(f"An error occurred: {str(e)}". traceback.format_exc())
+        return jsonify({'error': 'Internal server error.'}), 500

@@ -13,7 +13,7 @@ scheduler = None
 def check_and_run_cron_jobs():
     cron_state_rows = SettingsDatabaseManager.get_cron_state()
     cron_state = cron_state_rows[0][0] if cron_state_rows else 'stopped'
-    log.info(f"Cron state: {cron_state}")
+    log.info(f"Initializing scheduler... Cron state: {cron_state}")
     if cron_state == 'running' or cron_state == 'run_once':
         run_cron_jobs()
         if cron_state == 'run_once':
@@ -21,22 +21,21 @@ def check_and_run_cron_jobs():
 
 def run_cron_jobs():
     try:
+        log.info("Running a cron job...")
         result = subprocess.run(['python', CRON_JOB_PATH], check=True, text=True, capture_output=True)
         print(f"{result.stdout}")
     except Exception as e:
-        log.error(f"An error occurred while running cron job: {e}")
-        log.error(f"Traceback: {traceback.format_exc()}")
+        log.error(f"An error occurred while running cron job: {e}. Traceback: {traceback.format_exc()}")
 
 def run_scheduler():
     global scheduler
     try:
         if not scheduler:
-            log.info("Initializing scheduler...")
+            check_and_run_cron_jobs()
             scheduler = BackgroundScheduler()
-            scheduler.add_job(func=check_and_run_cron_jobs, trigger="interval", hours=1)
+            scheduler.add_job(func=check_and_run_cron_jobs, trigger="interval", minutes=1)
             scheduler.start()
             atexit.register(lambda: scheduler.shutdown())
             log.info("Scheduler started.")
     except Exception as e:
-        log.error("An error occurred while initializing the scheduler: %s", str(e))
-        log.error("", traceback.format_exc())
+        log.error(f"An error occurred while initializing the scheduler: {str(e)}. {traceback.format_exc()}")

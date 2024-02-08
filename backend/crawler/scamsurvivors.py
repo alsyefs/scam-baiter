@@ -103,6 +103,8 @@ def fetch():
             email_id = EmailsDatabaseManager.get_email_id_by_email_address_and_subject_and_body(from_email, to_email, title, content)
             if email_id is not None:
                 EmailsDatabaseManager.set_email_scammer_by_email_id(email_id)
+                EmailsDatabaseManager.set_email_queued_by_email_id(email_id)
+                EmailsDatabaseManager.set_email_inbound_by_email_id(email_id)
                 if EmailsDatabaseManager.is_scammer_by_two_emails(from_email, to_email) or from_email == 'CRAWLER' or to_email == 'CRAWLER':
                     EmailsDatabaseManager.set_email_scammer_by_email_id(email_id)
             else:
@@ -115,7 +117,7 @@ def fetch():
                     is_outbound=0,
                     is_archived=0,
                     is_handled=0,
-                    is_queued=0,
+                    is_queued=1,
                     is_scammer=1,
                     replied_from=''
                 )

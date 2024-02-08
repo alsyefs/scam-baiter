@@ -10,9 +10,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from backend import twilio
 from backend.responder.Chatgpt_Replier import gen_text1, gen_text2, gen_text3
 from database.sms_table import SmsDatabaseManager
-from backend.responder.tts import set_mp3_from_text
-from backend.elevenlabs.tts_ai import text_to_speech_mp3
-# from backend.models.tts.tts_coqui_model import tts_coqui
+# from backend.elevenlabs.tts_ai import text_to_speech_mp3
 from backend.models.tts.tts_openai_model import tts_openai
 from globals import TTS_MP3_PATH
 import random
@@ -119,13 +117,11 @@ def call_handler():
         if 'greeted' not in session:
             log.info(f"Ongoing call started from: ({request.values.get('From', None)}), to: ({request.values.get('To', None)}).")
             session['selected_voice_gender'] = random.choice([1, 2])  # 1: male, 2: female
-            session['selected_voice_accent'] = random.choice(['us', 'uk'])  # 1: British, 2: American
+            session['selected_voice_accent'] = random.choice(['us', 'uk'])  # 1: British, 2: American # for tts_openai
+            tts_openai("Hello!", session['selected_voice_gender'], session['selected_voice_accent'])
             # session['selected_voice_accent'] = random.choice([1, 2])  # 1: British, 2: American
             # session['selected_voice_age'] = random.choice([1, 2, 3])  # 1: young, 2: middle aged, 3: old
-            # # # gather.say("Hello!", voice=speaker_voice)
-            # set_mp3_from_text("Hello!") # gTTS
             # text_to_speech_mp3("Hello!", session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
-            tts_openai("Hello!", session['selected_voice_gender'], session['selected_voice_accent'])
             gather.play('/tts_play')
             session['greeted'] = True
             
@@ -154,33 +150,21 @@ def handle_ongoing_call():
     log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Received voice input: ({received_voice_input}).")
     response = VoiceResponse()
     if received_voice_input.lower() == 'end call':
-        # # response.say("Ending call now. Goodbye!", voice=speaker_voice)
-        # set_mp3_from_text("Ending call now. Goodbye!") # gTTS
         tts_openai("Ending call now. Goodbye!", session['selected_voice_gender'], session['selected_voice_accent'])
         # text_to_speech_mp3("Ending call now. Goodbye!", session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
         response.play('/tts_play')
-        # if(tts_coqui("Ending call now. Goodbye!")):
-        #     response.play('/tts_play')
         log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Ending call with the command: (end call).")
     elif received_voice_input:
         generated_response = gen_text3(received_voice_input)
-        # # response.say(generated_response, voice=speaker_voice)
-        # set_mp3_from_text(generated_response) # gTTS
         tts_openai(generated_response, session['selected_voice_gender'], session['selected_voice_accent'])
         # text_to_speech_mp3(generated_response, session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
         response.play('/tts_play')
-        # if(tts_coqui(generated_response)):
-        #     response.play('/tts_play')
         log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Generated voice response: ({generated_response}).")
         response.redirect('/ongoing_call')
     else:
-        # # response.say("Sorry, I did not catch that. Please try again.", voice=speaker_voice)
-        # set_mp3_from_text("Sorry, I did not catch that. Please try again.") # gTTS
         tts_openai("Sorry, I did not catch that. Please try again.", session['selected_voice_gender'], session['selected_voice_accent'])
         # text_to_speech_mp3("Sorry, I did not catch that. Please try again.", session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
         response.play('/tts_play')
-        # if(tts_coqui("Sorry, I did not catch that. Please try again.")):
-        #     response.play('/tts_play')
         log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Caller did not say anything.")
     new_call_conversation = CallConversations(
                 from_number=request.values.get('From', None),

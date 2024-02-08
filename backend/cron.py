@@ -42,7 +42,7 @@ def main(crawl=True):
                 num_tokens = len(encoding.encode(text))
                 log.info(f"Number of tokens: {num_tokens}")
                 if num_tokens > MAX_TOKENS:
-                    log.warning("This email is too long")
+                    log.info(f"This email is too long {email_filename}")
                     os.remove(email_path)
                     continue
                 subject = str(email_obj["title"])
@@ -51,12 +51,11 @@ def main(crawl=True):
                 scam_email = email_obj["from"]
                 if "bait_email" not in email_obj:
                     if solution_manager.scam_exists(scam_email):
-                        log.info("This crawled email has been replied, ignoring")
+                        log.info("This crawled email has been replied to. Ignored")
                         os.remove(email_path)
                         continue
                         # pass
                     archive(True, scam_email, "CRAWLER", email_obj["title"], text)
-                    log.info("This email is just crawled, using random replier")
                     replier = responder.get_replier_randomly()
                     bait_email = solution_manager.gen_new_addr(scam_email, replier.name)
                     stored_info = solution_manager.get_stored_info(bait_email, scam_email)
@@ -70,7 +69,7 @@ def main(crawl=True):
                     log.info(f"Found selected replier {stored_info.sol}")
                     replier = responder.get_replier_by_name(stored_info.sol)
                     if replier is None:
-                        log.warning("Replier Sol_name not found")
+                        log.info(f"Replier {stored_info.sol} was not found for {email_path}")
                         os.remove(email_path)
                         continue
                 try:
@@ -116,6 +115,8 @@ def main(crawl=True):
                     except Exception as e:
                         log.error(f"Error while inserting email into database: {e}")
                     archive(False, scam_email, bait_email, subject, res_text)
+                else:
+                    log.error(f"Failed to send response to {scam_email}")
             except Exception as e:
                 log.error("", e)
                 log.error("", traceback.format_exc())
@@ -144,7 +145,6 @@ def cleanup():
     """Cleanup function to delete the lock file, called when exiting."""
     try:
         delete_lock_file()
-        log.info("Cleanup completed, lock file removed.")
         log.info("--------------------- End of cron job ---------------------\n\n")
         cleanup_executed = True
     except Exception as e:

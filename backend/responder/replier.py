@@ -20,7 +20,6 @@ text_filters = [
 
 class Replier(ABC):
     name = "AbstractReplier"
-
     @abstractmethod
     def _gen_text(self, prompt) -> str:
         log.info(f"Generating reply using {self.name}")
@@ -64,26 +63,24 @@ class TemplateReplier(Replier):
             return ""
 
 class ChatReplier1(Replier):
-    name = "Chat1"
+    name = "Chat1" # gpt-4
     def _gen_text(self,prompt) -> str:
         try:
-            log.info(f"Generating reply using {self.name}")
-            log.info(f"Prompt: {prompt}")
+            # log.info(f"Generating reply using {self.name} (gpt-4). Prompt: {prompt}")
             res = gen_text1(prompt)
-            log.info(f"Reply: {res}")
+            # log.info(f"Reply: {res}. \nBy (gpt-4)")
             return res + "[bait_end]"
         except Exception as e:
             log.error(f"Error in ChatReplier1 _gen_text: {e}")
             return ""
 
 class ChatReplier2(Replier):
-    name = "Chat2"
+    name = "Chat2" # gpt-3.5-turbo
     def _gen_text(self,prompt) -> str:
         try:
-            log.info(f"Generating reply using {self.name}")
-            log.info(f"Prompt: {prompt}")
+            # log.info(f"Generating reply using {self.name} (gpt-3.5-turbo). Prompt: {prompt}")
             res = gen_text2(prompt)
-            log.info(f"Reply: {res}")
+            # log.info(f"Reply: {res}. \nBy (gpt-3.5-turbo)")
             return res + "[bait_end]"
         except Exception as e:
             log.error(f"Error in ChatReplier2 _gen_text: {e}")

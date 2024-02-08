@@ -22,5 +22,5 @@ def gen_text(model_path, prompt: str):
         word_list = prompt.replace("\n", "<br> ").split(" ")
         prompt = " ".join(word_list[-1000:]).replace("<br>", "\n")
 
-    res = gen.generate_text(prompt, args=gen_settings)
+    res = gen.generate_text(gpt_model = "gpt-3.5-turbo", prompt, args=gen_settings)
     return res.text

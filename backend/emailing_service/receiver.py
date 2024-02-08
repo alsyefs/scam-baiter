@@ -27,6 +27,12 @@ def on_receive(data):
                 break
     else:
         res["bait_email"] = raw_rec
+    # Store incoming email in a JSON file:
+    filename = str(data["timestamp"]) + ".json"
+    if not os.path.exists(MAIL_SAVE_DIR):
+        os.makedirs(MAIL_SAVE_DIR)
+    with open(f"{MAIL_SAVE_DIR}/{filename}", "w", encoding="utf8") as f:
+        json.dump(res, f)
     try:
         email_id = EmailsDatabaseManager.get_email_id_by_email_address_and_subject_and_body(str(data["sender"]).lower(),
                                                                                             res["bait_email"],
@@ -34,6 +40,7 @@ def on_receive(data):
                                                                                             res["content"])
         if email_id is not None:
             EmailsDatabaseManager.set_email_inbound_by_email_id(email_id)
+            EmailsDatabaseManager.set_email_queued_by_email_id(email_id)
         else:
             is_scammer = 0
             if EmailsDatabaseManager.is_scammer_by_two_emails(str(data["sender"]).lower(), res["bait_email"]):
@@ -53,10 +60,4 @@ def on_receive(data):
             )
     except Exception as e:
         log.error(f"Error while inserting email into database: {e}")
-    # Store incoming email in a JSON file:
-    filename = str(data["timestamp"]) + ".json"
-    if not os.path.exists(MAIL_SAVE_DIR):
-        os.makedirs(MAIL_SAVE_DIR)
-    with open(f"{MAIL_SAVE_DIR}/{filename}", "w", encoding="utf8") as f:
-        json.dump(res, f)
     archive(True, res["from"], res["bait_email"], res["title"], res["content"])

@@ -43,7 +43,7 @@ def store_addr(addr, scam_email, sol_name):
     }
     with open(ADDR_SOL_PATH, "w", encoding="utf8") as f:
         json.dump(d, f, indent=4)
-    log.info(f"Stored address {addr} for {scam_email} with {sol_name} in {ADDR_SOL_PATH}")
+    log.info(f"Stored address {addr} for {scam_email} with {sol_name}.")
 
 def get_stored_info(addr, scam_email) -> Optional[StoredInfo]:
     with open(ADDR_SOL_PATH, "r", encoding="utf8") as f:

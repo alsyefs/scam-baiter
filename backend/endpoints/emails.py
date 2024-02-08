@@ -101,10 +101,31 @@ def get_all_emails():
     emails = EmailsDatabaseManager.get_emails()
     return jsonify([dict(email) for email in emails])
 
+@emails_bp.route('/get_all_emails_pages')
+@requires_roles('admin', 'super admin')
+def get_all_emails_pages():
+    page = request.args.get('page', default=1, type=int)
+    emails = EmailsDatabaseManager.get_emails_pages(page=page, per_page=100)
+    return jsonify([dict(email) for email in emails])
+
+@emails_bp.route('/get_email_count')
+@requires_roles('admin', 'super admin')
+def get_email_count():
+    total_emails = EmailsDatabaseManager.get_email_count()
+    return jsonify({'total_emails': total_emails}), 200
+
+
 @emails_bp.route('/get_inbound_emails')
 @requires_roles('admin', 'super admin')
 def get_inbound_emails():
     emails = EmailsDatabaseManager.get_inbound_emails()
+    return jsonify([dict(email) for email in emails])
+
+@emails_bp.route('/get_inbound_emails_pages')
+@requires_roles('admin', 'super admin')
+def get_inbound_emails_pages():
+    page = request.args.get('page', default=1, type=int)
+    emails = EmailsDatabaseManager.get_inbound_emails_pages(page=page, per_page=100)
     return jsonify([dict(email) for email in emails])
 
 @emails_bp.route('/get_outbound_emails')
@@ -112,25 +133,62 @@ def get_inbound_emails():
 def get_outbound_emails():
     emails = EmailsDatabaseManager.get_outbound_emails()
     return jsonify([dict(email) for email in emails])
+@emails_bp.route('/get_outbound_emails_pages')
+@requires_roles('admin', 'super admin')
+def get_outbound_emails_pages():
+    page = request.args.get('page', default=1, type=int)
+    emails = EmailsDatabaseManager.get_outbound_emails_pages(page=page, per_page=100)
+    return jsonify([dict(email) for email in emails])
 @emails_bp.route('/get_scammer_emails')
 @requires_roles('admin', 'super admin')
 def get_scammer_emails():
     emails = EmailsDatabaseManager.get_scammer_emails()
     return jsonify([dict(email) for email in emails])
+
+@emails_bp.route('/get_scammer_emails_pages')
+@requires_roles('admin', 'super admin')
+def get_scammer_emails_pages():
+    page = request.args.get('page', default=1, type=int)
+    emails = EmailsDatabaseManager.get_scammer_emails_pages(page=page, per_page=100)
+    return jsonify([dict(email) for email in emails])
+
 @emails_bp.route('/get_archived_emails')
 @requires_roles('admin', 'super admin')
 def get_archived_emails():
     emails = EmailsDatabaseManager.get_archived_emails()
     return jsonify([dict(email) for email in emails])
+
+@emails_bp.route('/get_archived_emails_pages')
+@requires_roles('admin', 'super admin')
+def get_archived_emails_pages():
+    page = request.args.get('page', default=1, type=int)
+    emails = EmailsDatabaseManager.get_archived_emails_pages(page=page, per_page=100)
+    return jsonify([dict(email) for email in emails])
+
 @emails_bp.route('/get_handled_emails')
 @requires_roles('admin', 'super admin')
 def get_handled_emails():
     emails = EmailsDatabaseManager.get_handled_emails()
     return jsonify([dict(email) for email in emails])
+
+@emails_bp.route('/get_handled_emails_pages')
+@requires_roles('admin', 'super admin')
+def get_handled_emails_pages():
+    page = request.args.get('page', default=1, type=int)
+    emails = EmailsDatabaseManager.get_handled_emails_pages(page=page, per_page=100)
+    return jsonify([dict(email) for email in emails])
+
 @emails_bp.route('/get_queued_emails')
 @requires_roles('admin', 'super admin')
 def get_queued_emails():
     emails = EmailsDatabaseManager.get_queued_emails()
+    return jsonify([dict(email) for email in emails])
+
+@emails_bp.route('/get_queued_emails_pages')
+@requires_roles('admin', 'super admin')
+def get_queued_emails_pages():
+    page = request.args.get('page', default=1, type=int)
+    emails = EmailsDatabaseManager.get_queued_emails_pages(page=page, per_page=100)
     return jsonify([dict(email) for email in emails])
 
 @emails_bp.route('/send_email', methods=['POST'])

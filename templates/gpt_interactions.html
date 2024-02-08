@@ -42,12 +42,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var url = '/select_all_gpt_interactions';
     fetch(url).then(response => response.json()).then(data => {
         populateTable(data);
-        var loadingMessage = document.getElementById('loading-message');
-        if(loadingMessage) {loadingMessage.remove();}
+        if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
     }).catch(error => {
         console.error('Error:', error);
-        var loadingMessage = document.getElementById('loading-message');
-        if(loadingMessage) {loadingMessage.remove();}
+        if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
         var TableBody = document.getElementById('gpt-interactions-table-body');
         TableBody.innerHTML = '<tr><td colspan="13" class="text-center">Failed to load data.</td></tr>';
     });

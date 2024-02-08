@@ -95,7 +95,7 @@ OLD_COVERSATIONS_CSV = os.path.join(BASE_DIR, "data", "old_conversations.csv")
 # CRAWLER CONF
 CRAWLER_PROG_DIR = os.path.join(BASE_DIR, "cache")  # has crawled cache
 MAX_PAGE_SL = 2 # max page for scammer list
-MAX_PAGE_SS = 7 # max page for scammer sites
+MAX_PAGE_SS = 100 # max page for scammer sites
 
 # MAILGUN
 MAILGUN_API_KEY = MAILGUN_API_KEY

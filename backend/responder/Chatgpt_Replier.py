@@ -11,28 +11,24 @@ from .chatgpt import generate_text
 
 openai.api_key = OPENAI_API_KEY
 def gen_text1(prompt):
+  gpt_model = "gpt-4"
   prompt = "Reply without any signature: " + prompt
   messages=[{"role": "system", "content": GPT_CHAT_1_INSTRUCTIONS}, {"role": "user", "content": prompt}]
-  res = generate_text(messages, 0.2, 0.2)
+  res = generate_text(gpt_model, messages, 0.2, 0.2)
   return res
 
 def gen_text2(prompt):
-  messages = [{"role": "system", "content": GPT_CHAT_2_INSTRUCTIONS}]
+  gpt_model = "gpt-3.5-turbo"
   prompt = "Reply without any signature: " + prompt
-  file1 = fileread(FILENAME1,["user1","assistant1"],4)
-  messages.extend(file1)
-  file2 = fileread(FILENAME2,["user2","assistant2"],4)
-  messages.extend(file2)
-  file3 = fileread(FILENAME3,["user3","assistant3"],4)
-  messages.extend(file3)
-  messages.append({"role": "user", "content": prompt})
-  res = generate_text(messages, 0.2, 0.2)
+  messages=[{"role": "system", "content": GPT_CHAT_1_INSTRUCTIONS}, {"role": "user", "content": prompt}]
+  res = generate_text(gpt_model, messages, 0.2, 0.2)
   return res
 
 def gen_text3(prompt):
+  gpt_model = "gpt-3.5-turbo"
   prompt = "Reply without any signature: " + prompt
   messages=[{"role": "system", "content": GPT_CHAT_3_INSTRUCTIONS}, {"role": "user", "content": prompt}]
-  res = generate_text(messages, 0.2, 0.2)
+  res = generate_text(gpt_model, messages, 0.2, 0.2)
   return res
 
 def fileread(filename, names, a):

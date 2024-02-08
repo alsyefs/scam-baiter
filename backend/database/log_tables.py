@@ -27,6 +27,7 @@ class LogsDatabaseManager:
             raise ValueError(f"Invalid table name: {table_name}")
     def drop_table(self, table_name):
         self.validate_table_name(table_name)
+        conn = None
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         try:
@@ -36,9 +37,11 @@ class LogsDatabaseManager:
             print(f"Error dropping {table_name} table: {e}")
             log.error(f"Error dropping {table_name} table: {e}")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
     def create_table(self, table_name):
         self.validate_table_name(table_name)
+        conn = None
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         try:
@@ -57,7 +60,8 @@ class LogsDatabaseManager:
             print(f"Error creating {table_name} table: {e}")
             log.error(f"Error creating {table_name} table: {e}")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
     def insert_log(self, level, message, table_name, file_name):
         self.validate_table_name(table_name)
@@ -123,6 +127,23 @@ class LogsDatabaseManager:
             conn.close()
         return logs
     
+    @staticmethod
+    def select_logs_by_level_pages(level, table_name, page=1, per_page=100):
+        conn = None
+        try:
+            conn = LogsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            offset = (page - 1) * per_page
+            query = f"SELECT * FROM {table_name} WHERE level = ? ORDER BY date DESC, time DESC LIMIT ? OFFSET ?"
+            cursor.execute(query, (level, per_page, offset))
+            logs = cursor.fetchall()
+            return logs
+        except Exception as e:
+            log.error(f"Error selecting logs in {table_name} table: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
     def select_logs_by_message(self, message, table_name):
         self.validate_table_name(table_name)
         conn = sqlite3.connect(self.db_path)
@@ -152,8 +173,7 @@ class LogsDatabaseManager:
         finally:
             conn.close()
         return log
-
-    # delete all logs where their level is not related to that table:
+    
     @staticmethod
     def delete_logs_by_level(level):
         if(level == 'DEBUG'):
@@ -177,6 +197,23 @@ class LogsDatabaseManager:
             cursor.execute(sql, (level,))
             conn.commit()
             conn.close()
+     
+    @staticmethod
+    def get_logs_count(level, table_name):
+        conn = None
+        try:
+            conn = LogsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            query = f"SELECT * FROM {table_name} WHERE level = ? order by date desc, time desc"
+            cursor.execute(query, (level,))
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log.error(f"Error counting logs in table {table_name} for level {level}: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
 # # call delete_logs_by_level():
 # LogsDatabaseManager.delete_logs_by_level('DEBUG')
 # LogsDatabaseManager.delete_logs_by_level('INFO')
