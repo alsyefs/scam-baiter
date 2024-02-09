@@ -8,7 +8,7 @@ from logs import LogManager
 log = LogManager.get_logger()
 
 def send_email(username, address, target, subject, text):
-    # target = MAILGUN_TARGET_EMAIL_TEST # Email for testing to be removed in production.
+    target = MAILGUN_TARGET_EMAIL_TEST # Email for testing to be removed in production.
     with open(EMAIL_TEMPLATE, "r") as f:
         template = f.read()
     try:
