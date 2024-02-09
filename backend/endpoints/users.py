@@ -15,6 +15,7 @@ def requires_roles(*roles):
         def decorated_function(*args, **kwargs):
             if 'username' not in session:
                 flash('You need to be signed in to view this page.', 'error')
+                log.warning("User not signed in. Redirecting to sign in page (/users).")
                 return redirect(url_for('users.signin'))
             current_user = User.query.filter_by(username=session['username']).first()
             if current_user:
@@ -22,6 +23,7 @@ def requires_roles(*roles):
                 if any(role in roles for role in user_roles):
                     return f(*args, **kwargs)
             flash('You do not have the required permissions to view this page.', 'error')
+            log.warning(f"User ({session['username']}) does not have the required permissions to view this page (/users).")
             return redirect(url_for('index'))
         return decorated_function
     return wrapper
@@ -67,13 +69,13 @@ def signin():
             user_exists = User.query.filter_by(username=username).first()
             if user_exists:
                 if check_password_hash(user_exists.password_hash, password):
-                    log.info(f"Successful login for '{username}'")
+                    log.warning(f"Successful login for '{username}'")
                     session['username'] = username
                     return redirect(url_for('index'))
                 else:
-                    log.info(f"Incorrect password for '{username}'")
+                    log.warning(f"Incorrect password for '{username}'")
             else:
-                log.info(f"Sign in attempt for username: '{username}'. This user does not exist.")
+                log.warning(f"Sign in attempt for username: '{username}'. This user does not exist.")
             flash('Incorrect username or password', 'error')
             return render_template("signin.html")
         if 'username' in session:
@@ -98,7 +100,7 @@ def signup():
             if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?/~`'-=|\\])[A-Za-z\d!@#$%^&*()_+{}\[\]:;<>,.?/~`'-=|\\]{8,}$", password):
                 return "Username must be an email ending with @bristol.ac.uk"
             if password != confirm_password:
-                    return "Passwords do not match"
+                return "Passwords do not match"
             if password == confirm_password:
                 hashed_password = generate_password_hash(password)
                 new_user = User(username=username, password_hash=hashed_password)
@@ -112,7 +114,7 @@ def signup():
                 if guest_role:
                     new_user.roles.append(guest_role)
                 db_models.session.commit()
-                log.info(f"Created user '{username}' with role 'guest'.")
+                log.warning(f"Created user '{username}' with role 'guest'.")
                 session['username'] = username
                 return redirect(url_for('index'))
         return render_template("signup.html")
@@ -125,12 +127,13 @@ def signup():
 @requires_roles('admin', 'super admin')
 def check_username_exists():
     username = request.args.get('username').lower()
+    log.warning(f"Sign up attempt using username: ('{username}').")
     username_exists = User.query.filter_by(username=username).first()
     return jsonify({'exists': bool(username_exists)})
 
 @users_bp.route("/logout")
 def logout():
-    log.info(f"User '{session['username']}' logged out.")
+    log.warning(f"User '{session['username']}' logged out.")
     session.pop('username', None)
     return redirect(url_for('index'))
 
@@ -213,6 +216,7 @@ def clear_password():
             user.password_hash = generate_password_hash(new_password)
             user.updated = datetime.utcnow()
             db_models.session.commit()
+            log.warning(f"Password cleared for user ('){user.username}).")
             flash('Password updated successfully!', 'success')
         else:
             flash('User not found.', 'danger')

@@ -35,3 +35,4 @@ TTS # https://github.com/coqui-ai/TTS # This requires C++ build tools version 14
 # google.cloud # for google cloud speech to text
 # google-cloud-texttospeech # for google cloud text to speech
 twilio # Phone number service for making phone calls, sending sms, etc.
+tqdm

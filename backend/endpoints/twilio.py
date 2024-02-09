@@ -27,6 +27,7 @@ def requires_roles(*roles):
         def decorated_function(*args, **kwargs):
             if 'username' not in session:
                 flash('You need to be signed in to view this page.', 'error')
+                log.warning("User not signed in. Redirecting to sign in page (twilio).")
                 return redirect(url_for('users.signin'))
             current_user = User.query.filter_by(username=session['username']).first()
             if current_user:
@@ -34,6 +35,7 @@ def requires_roles(*roles):
                 if any(role in roles for role in user_roles):
                     return f(*args, **kwargs)
             flash('You do not have the required permissions to view this page.', 'error')
+            log.warning(f"User ({session['username']}) does not have the required permissions to view this page (/twilio).")
             return redirect(url_for('index'))
         return decorated_function
     return wrapper

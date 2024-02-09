@@ -33,7 +33,7 @@ def run_scheduler():
         if not scheduler:
             check_and_run_cron_jobs()
             scheduler = BackgroundScheduler()
-            scheduler.add_job(func=check_and_run_cron_jobs, trigger="interval", minutes=1)
+            scheduler.add_job(func=check_and_run_cron_jobs, trigger="interval", hours=1)
             scheduler.start()
             atexit.register(lambda: scheduler.shutdown())
             log.info("Scheduler started.")

@@ -9,7 +9,8 @@
         <form method="post" action="{{ url_for('users.signup') }}" id="signupForm">
             <div class="form-group">
                 <label for="username">Username (Email)</label>
-                <input type="email" class="form-control" id="username" name="username" pattern=".+@bristol\.ac\.uk" title="Email must end with @bristol.ac.uk" oninput="checkUsername()" required>
+                <!-- <input type="email" class="form-control" id="username" name="username" pattern=".+@bristol\.ac\.uk" title="Email must end with @bristol.ac.uk" oninput="checkUsername()" required> -->
+                <input type="email" class="form-control" id="username" name="username" pattern=".+@bristol\.ac\.uk" title="Email must be correct" oninput="checkUsername()" required>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
