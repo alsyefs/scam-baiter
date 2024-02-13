@@ -38,7 +38,7 @@ DEFAULT_USER_USERNAME = DEFAULT_USER_USERNAME
 DEFAULT_USER_PASSWORD = DEFAULT_USER_PASSWORD
 
 # MAIL handling
-MAX_EMAILS_TO_HANDLE = 5  # number of replies per cron run
+MAX_EMAILS_TO_HANDLE = 20  # number of replies per cron run
 EMAILS_DIRECTORY = os.path.join(BASE_DIR, "emails")  # root directory for all emails
 MAIL_SAVE_DIR = os.path.join(BASE_DIR, "emails", "queued")  # crawled and received emails
 MAIL_ARCHIVE_DIR = os.path.join(BASE_DIR, "emails", "archive")  # archive

@@ -31,7 +31,7 @@ def main(crawl=True):
     count = 0
     log.info(f"Handling {len(email_filenames)} emails")
     for email_filename in email_filenames:
-        if count < 5:
+        if count < MAX_EMAILS_TO_HANDLE:
             try:
                 log.info(f"Handling {email_filename}")
                 email_path = os.path.join(MAIL_SAVE_DIR, email_filename)
