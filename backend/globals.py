@@ -6,8 +6,10 @@ from secret import (
     DEFAULT_USER_PASSWORD, DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD,
     MAILGUN_TARGET_EMAIL_TEST, ELEVENLABS_API_KEY
 )
+from models.tts.phone_call_script import (PROMPT_KEYWORDS, RESPONSE_KEYWORDS)
 import logging
 import os
+
 # System variables:
 FLASK_SECRET_KEY = FLASK_SECRET_KEY
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -114,3 +116,7 @@ TWILIO_CALL_URL = TWILIO_CALL_URL
 # ElevenLabs
 ELEVENLABS_API_KEY = ELEVENLABS_API_KEY
 ELEVENLABS_PREMADE_VOICES = os.path.join(BASE_DIR, "elevenlabs", "elevenlabs_voices.json")
+
+# Phone call scripts:
+PROMPT_KEYWORDS = PROMPT_KEYWORDS
+RESPONSE_KEYWORDS = RESPONSE_KEYWORDS

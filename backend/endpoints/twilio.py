@@ -12,8 +12,10 @@ from backend.responder.Chatgpt_Replier import gen_text1, gen_text2, gen_text3
 from database.sms_table import SmsDatabaseManager
 # from backend.elevenlabs.tts_ai import text_to_speech_mp3
 from backend.models.tts.tts_openai_model import tts_openai
+from backend.responder.phone_call_script import generate_call_response
 from globals import TTS_MP3_PATH
 import random
+import time
 
 speaker_voice = 'Polly.Matthew-Neural'
 selected_voice_accent = 1
@@ -115,9 +117,11 @@ def make_call():
 def call_handler():
     try:
         response = VoiceResponse()
-        gather = Gather(input='speech', action='/handle_ongoing_call')
+        # gather = Gather(input='speech', action='/handle_ongoing_call')
+        gather = Gather(input='speech dtmf', action='/handle_ongoing_call', timeout=3, profanityFilter=False, speechTimeout=1)
         if 'greeted' not in session:
             log.info(f"Ongoing call started from: ({request.values.get('From', None)}), to: ({request.values.get('To', None)}).")
+            session['greeted'] = True
             session['selected_voice_gender'] = random.choice([1, 2])  # 1: male, 2: female
             session['selected_voice_accent'] = random.choice(['us', 'uk'])  # 1: British, 2: American # for tts_openai
             tts_openai("Hello!", session['selected_voice_gender'], session['selected_voice_accent'])
@@ -125,11 +129,8 @@ def call_handler():
             # session['selected_voice_age'] = random.choice([1, 2, 3])  # 1: young, 2: middle aged, 3: old
             # text_to_speech_mp3("Hello!", session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
             gather.play('/tts_play')
-            session['greeted'] = True
-            
-            # if(tts_coqui("Hello!")):
-            #     gather.play('/tts_play')
-            #     session['greeted'] = True
+            # tts_openai("uh huh", session['selected_voice_gender'], session['selected_voice_accent'])
+            # gather.play('/tts_play')
         response.append(gather)
         return Response(str(response), mimetype='text/xml')
     except Exception as e:
@@ -148,20 +149,36 @@ def tts_play():
 
 @twilio_bp.route("/handle_ongoing_call", methods=['GET', 'POST'])
 def handle_ongoing_call():
+    print("STARTED /handle_ongoing_call")
+    start_time = time.time()
     received_voice_input = request.values.get('SpeechResult', None)
-    log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Received voice input: ({received_voice_input}).")
+    time_to_receive_input = time.time() - start_time
+    time_to_receive_input = f"{time_to_receive_input:.2f} seconds" if time_to_receive_input < 60 else f"{time_to_receive_input/60:.2f} minutes"
+    print(f"Received voice input in ({time_to_receive_input}).")
+    # time_to_recognize = request.values.get('RecognitionTime', None)
     response = VoiceResponse()
+    generated_response = ''
     if received_voice_input.lower() == 'end call':
         tts_openai("Ending call now. Goodbye!", session['selected_voice_gender'], session['selected_voice_accent'])
         # text_to_speech_mp3("Ending call now. Goodbye!", session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
         response.play('/tts_play')
-        log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Ending call with the command: (end call).")
+        log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Received voice input: ({received_voice_input}). Ending call with the command: (end call).")
     elif received_voice_input:
-        generated_response = gen_text3(received_voice_input)
+        # generated_response = gen_text3(received_voice_input)
+        generated_response = generate_call_response(received_voice_input)
+        time_to_generate_text_response = time.time() - start_time
+        time_to_generate_text_response = f"{time_to_generate_text_response:.2f} seconds" if time_to_generate_text_response < 60 else f"{time_to_generate_text_response/60:.2f} minutes"
+        print(f"Generated text response in ({time_to_generate_text_response}).")
         tts_openai(generated_response, session['selected_voice_gender'], session['selected_voice_accent'])
+        time_to_generate_voice_response = time.time() - start_time
+        time_to_generate_voice_response = f"{time_to_generate_voice_response:.2f} seconds" if time_to_generate_voice_response < 60 else f"{time_to_generate_voice_response/60:.2f} minutes"
+        print(f"Generated voice response in ({time_to_generate_voice_response}).")
         # text_to_speech_mp3(generated_response, session['selected_voice_accent'], session['selected_voice_gender'], session['selected_voice_age'])
         response.play('/tts_play')
-        log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Generated voice response: ({generated_response}).")
+        completed_time = time.time() - start_time
+        completed_time = f"{completed_time:.2f} seconds" if completed_time < 60 else f"{completed_time/60:.2f} minutes"
+        print(f"ENDED /handle_ongoing_call. Call handling completed in ({completed_time}).")
+        log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Received voice input: ({received_voice_input}). Generated voice response: ({generated_response}).")
         response.redirect('/ongoing_call')
     else:
         tts_openai("Sorry, I did not catch that. Please try again.", session['selected_voice_gender'], session['selected_voice_accent'])
@@ -193,7 +210,8 @@ def ongoing_call_failed():
 def hangup():
     try:
         resp = VoiceResponse()
-        resp.say("Goodbye!", voice=speaker_voice)
+        tts_openai("Goodbye!", session['selected_voice_gender'], session['selected_voice_accent'])
+        resp.play('/tts_play')
         resp.hangup()
         log.info(f"Call ended from: ({request.values.get('From', None)}), to: ({request.values.get('To', None)}).")
         return Response(str(resp), mimetype='text/xml')

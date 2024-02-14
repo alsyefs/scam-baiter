@@ -6,12 +6,12 @@ log = LogManager.get_logger()
 import traceback
 from functools import wraps
 from datetime import datetime
-import openai
+from openai import OpenAI
 import re
 from globals import OPENAI_API_KEY, GPT_MODEL
 from database.gpt_table import GPTDatabaseManager
 
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 gpt_bp = Blueprint('gpt', __name__)
 users_bp = Blueprint('users', __name__)
 def requires_roles(*roles):
@@ -58,21 +58,21 @@ def generate_gpt_text(gpt_instructions, prompt_message, gpt_model=GPT_MODEL, tem
         {"role": "user", "content": prompt_message}
     ]
     request_params = {
-            "messages": messages,
-            "model": gpt_model,
-            "temperature": temperature,
-            "max_tokens": max_length,
-            "top_p": top_p,
-            "presence_penalty": presence_penalty,
-            "frequency_penalty": frequency_penalty
-            }
+        "messages": messages,
+        "model": gpt_model,
+        "temperature": temperature,
+        "max_tokens": max_length,
+        "top_p": top_p,
+        "presence_penalty": presence_penalty,
+        "frequency_penalty": frequency_penalty
+        }
     if stop:
         request_params["stop"] = stop
     try:
         log.info(f"Generating text with the following parameters: {messages}, {gpt_model}, {temperature}, {max_length}, {stop}, {top_p}, {presence_penalty}, {frequency_penalty}")
-        completion = openai.ChatCompletion.create(**request_params)
-        log.info(f"Generated text: {completion.choices[0].message['content']}")
-        return completion.choices[0].message['content']
+        completion = client.chat.completions.create(**request_params)
+        log.info(f"Generated text: {completion.choices[0].message.content}")
+        return completion.choices[0].message.content
     except Exception as e:
         log.error(f"Error: {e}")
         return None

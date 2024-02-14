@@ -16,11 +16,7 @@ def tts_openai(text: str, gender: int = 1, accent: str = "us"):
         voices = ["alloy", "nova", "shimmer"]
     else:
         voices = ["alloy"]
-    response = client.audio.speech.create(
-    model="tts-1", # or "tts-1-hd" but double the price and slower
-    voice=voices[0],
-    input=text
-    )
+    response = client.audio.speech.create(model="tts-1", voice=voices[0], input=text)
     response.stream_to_file(TTS_MP3_PATH)
     
 if __name__ == "__main__":

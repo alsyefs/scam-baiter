@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import sys
 import os
 import re
@@ -6,7 +6,7 @@ from globals import OPENAI_API_KEY, GPT_MODEL
 from logs import LogManager
 log = LogManager.get_logger()
 
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 responder_path = os.path.join(os.path.dirname(__file__), 'responder')
 sys.path.insert(0, responder_path)
 
@@ -20,7 +20,7 @@ def generate_text(gpt_model = "gpt-3.5-turbo", messages, temperature=0.2, top_p=
     completion = None
     general_message = "Apologies, but I do not know why do you need to know that."
     try:
-        completion = openai.ChatCompletion.create(model=gpt_model, messages=messages, temperature=temperature, top_p=top_p, presence_penalty=0.5, frequency_penalty=0.5)
+        completion = client.chat.completions.create(model=gpt_model, messages=messages, temperature=temperature, top_p=top_p, presence_penalty=0.5, frequency_penalty=0.5)
     except Exception as e:
         log.error(f"Error: {e}")
     except:
