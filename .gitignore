@@ -5,6 +5,7 @@
 /backend/emails/
 /backend/cache/
 /backend/data/audio_files/
+/backend/data/scammers_phone_numbers.json
 # /backend/models
 
 # Byte-compiled / optimized / DLL files

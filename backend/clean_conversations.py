@@ -15,13 +15,17 @@ from globals import (
     MAILGUN_DOMAIN_NAME, EMAIL_ARCHIVED_REPORT, EMAILS_REPORT_DIR,
     EMAIL_CONVERSATIONS_REPORT_CSV, EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV
 )
+HIDE_EMAILS = True
+# CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1' # old strategy name
+# CHAT_2_STRATEGY_NAME = 'gpt-4-Chat2' # old strategy name
+CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1'          # new strategy name
+CHAT_2_STRATEGY_NAME = 'gpt-3.5-turbo-Chat2'  # new strategy name
+
 def get_sol_from_addr_sol_path(email_to, email_from):
     with open(ADDR_SOL_PATH, 'r') as f:
         addr_sol_data = json.load(f)
-    chat_1 = 'gpt-4-Chat1'
-    chat_2 = 'gpt-4-Chat2'
-    # chat_1 = 'gpt-4-Chat1'
-    # chat_2 = 'gpt-3.5-turbo-Chat2'
+    chat_1 = CHAT_1_STRATEGY_NAME
+    chat_2 = CHAT_2_STRATEGY_NAME
     result = None
     for key, value in addr_sol_data.items():
         if key.lower() == email_to.lower():
@@ -230,14 +234,16 @@ def clean_and_sort_conversations(source_directory, output_directory,
             counter = 0
             file.write(f"\n*** All conversations with scammers: \n")
             for filename, days in conversations_report.items():
-                counter+=1
-                file.write(f"{counter}. Conversations with ({filename.replace('.json', '')}) took ({days['days_from_first_conversation']}) days and had ({days['number_of_conversations']}) conversations, ({days['inbounds']}) as inbounds and ({days['outbounds']}) outbounds, using ({days['strategy']}).\n")
+                if days['strategy'] != 'None':
+                    counter+=1
+                    file.write(f"{counter}. Conversations with ({filename.replace('.json', '')}) took ({days['days_from_first_conversation']}) days and had ({days['number_of_conversations']}) conversations, ({days['inbounds']}) as inbounds and ({days['outbounds']}) outbounds, using ({days['strategy']}).\n")
         counter = 0
         with open(EMAIL_CONVERSATIONS_REPORT_CSV, "w", encoding="utf-8") as file:
             file.write("n,scammer,conversation_days,number_of_conversations,outbounds,inbounds,strategy\n")
             for filename, days in conversations_report.items():
-                counter+=1
-                file.write(f"{counter},{filename.replace('.json', '')},{days['days_from_first_conversation']},{days['number_of_conversations']}, {days['outbounds']}, {days['inbounds']},{days['strategy']}\n")
+                if days['strategy'] != 'None':
+                    counter+=1
+                    file.write(f"{counter},{filename.replace('.json', '')},{days['days_from_first_conversation']},{days['number_of_conversations']}, {days['outbounds']}, {days['inbounds']},{days['strategy']}\n")
     else:
         print("No files with valid conversations were found.")
 
@@ -378,7 +384,8 @@ def generate_report_from_csv():
     print(f"Report stored in ({os.path.relpath(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, BASE_DIR)}).")
     plot_chart_threads_per_strategy(strategies)
     plot_chart_conversations_per_strategy(strategies)
-    plot_chart_outbounds_vs_inbounds_per_strategy(strategies)
+    plot_chart_max_conversations_per_thread(strategies)
+    plot_chart_avg_conversations_per_thread(strategies)
 
 def plot_chart_threads_per_strategy(strategies):
     df = pd.DataFrame(strategies)
@@ -390,37 +397,22 @@ def plot_chart_threads_per_strategy(strategies):
     print(f"Plot chart of threads per strategy stored in ({os.path.relpath(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, BASE_DIR)}).")
     df = df[df['strategy'] != 'Total']
     df = df.sort_values(by='total_conversation_threads', ascending=False)
-    fig, ax = plt.subplots(figsize=(7, 7))
-    ax.bar(df['strategy'], df['total_conversation_threads'], label='Total number of conversation threads per strategy', width=0.2)
+    fig, ax = plt.subplots(figsize=(10, 7))
+    bar_width = 0.2
+    bars = ax.bar(df['strategy'], df['total_conversation_threads'], width=bar_width, label='Total conversation threads per strategy')
     ax.set_title('Conversation threads per strategy')
     ax.set_xlabel('Strategy')
     ax.set_ylabel('Conversation threads')
     ax.tick_params(axis='x', rotation=45)
-    for i, v in enumerate(df['total_conversation_threads']):
-        plt.text(i, v - 5, str(int(v)), ha='center')
-    plt.axhline(y=df['total_conversation_threads'].max(), color='gray', linestyle='-', label='Max', linewidth=1.5, alpha=0.7, zorder=1, marker='o', markersize=5, markerfacecolor='r')
-    plt.axhline(y=df['total_conversation_threads'].min(), color='gray', linestyle='-', label='Min')
-    # for i, (strategy, data) in enumerate(df.iterrows()):
-    #     max_conversations = data['max_conversations']
-    #     min_conversations = data['min_conversations']
-    #     max_outbounds = data['max_outbounds']
-    #     max_inbounds = data['max_inbounds']
-        # if max_conversations != 'N/A':
-            # ax.axhline(y=max_conversations, color='gray', linestyle='-', label='Max conversations')
-            # ax.text(i, max_conversations + 25, f'{int(max_conversations)} Max conversations', ha='center', color='black')
-        # if min_conversations != 'N/A':
-            # ax.axhline(y=min_conversations, color='gray', linestyle='-', label='Min conversations')
-            # ax.text(i, min_conversations, f'{int(min_conversations)} Min conversations', ha='center', color='black')
-        # if max_outbounds != 'N/A':
-            # ax.axhline(y=max_outbounds, color='gray', linestyle='-', label='Max outbounds')
-            # ax.text(i, max_outbounds + 15, f'{int(max_outbounds)} Max outbounds', ha='center', color='black')
-        # if max_inbounds != 'N/A':
-            # ax.axhline(y=max_inbounds, color='gray', linestyle='-', label='Max inbounds')
-            # ax.text(i, max_inbounds, f'{int(max_inbounds)} Max inbounds', ha='center', color='black')
-    # ax.legend()
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{int(height)}',
+                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3),
+                    textcoords="offset points",
+                    ha='center', va='bottom')
     plt.tight_layout()
-    plt.savefig(os.path.join(EMAILS_REPORT_DIR, 'threads_per_strategy.png'))
-    # plt.show()
+    plt.savefig(os.path.join(EMAILS_REPORT_DIR, 'chart_threads_per_strategy.png'))
     print(f"Bar chart stored in ({os.path.relpath(EMAILS_REPORT_DIR, BASE_DIR)}).")
 
 def plot_chart_conversations_per_strategy(strategies):
@@ -432,75 +424,102 @@ def plot_chart_conversations_per_strategy(strategies):
     df.to_csv(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, index=False)
     print(f"Plot chart conversations per strategy stored in ({os.path.relpath(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, BASE_DIR)}).")
     df = df[df['strategy'] != 'Total']
-    df = df.sort_values(by='total_conversations', ascending=False)
-    fig, ax = plt.subplots(figsize=(7, 7))
-    ax.bar(df['strategy'], df['total_conversations'], label='Total number of conversations per strategy', width=0.2)
+    df = df.sort_values(by='total_outbounds', ascending=False)
+    fig, ax = plt.subplots(figsize=(10, 7))
+    bar_width = 0.2
+    indices = range(len(df))
+    ax.bar([x - bar_width for x in indices], df['total_conversations'], width=bar_width, label='Conversations', align='center')
+    ax.bar(indices, df['total_outbounds'], width=bar_width, label='Outbounds', align='center')
+    ax.bar([x + bar_width for x in indices], df['total_inbounds'], width=bar_width, label='Inbounds', align='center')
     ax.set_title('Conversations per strategy')
     ax.set_xlabel('Strategy')
     ax.set_ylabel('Conversations')
-    ax.tick_params(axis='x', rotation=45)
+    ax.set_xticks(indices)
+    ax.set_xticklabels(df['strategy'], rotation=45)
     for i, v in enumerate(df['total_conversations']):
-        plt.text(i, v - 15, str(int(v)), ha='center')
-    plt.axhline(y=df['total_conversations'].max(), color='gray', linestyle='-', label='Max', linewidth=1.5, alpha=0.7, zorder=1, marker='o', markersize=5, markerfacecolor='r')
-    plt.axhline(y=df['total_conversations'].min(), color='gray', linestyle='-', label='Min')
-    for i, (strategy, data) in enumerate(df.iterrows()):
-        max_conversations = data['max_conversations']
-        min_conversations = data['min_conversations']
-        max_outbounds = data['max_outbounds']
-        max_inbounds = data['max_inbounds']
-        if max_conversations != 'N/A':
-            ax.axhline(y=max_conversations, color='gray', linestyle='-', label='Max conversations')
-            ax.text(i, max_conversations + 25, f'{int(max_conversations)} Max conversations', ha='center', color='black')
-        if min_conversations != 'N/A':
-            ax.axhline(y=min_conversations, color='gray', linestyle='-', label='Min conversations')
-            ax.text(i, min_conversations, f'{int(min_conversations)} Min conversations', ha='center', color='black')
-        if max_outbounds != 'N/A':
-            # ax.axhline(y=max_outbounds, color='gray', linestyle='-', label='Max outbounds')
-            ax.text(i, max_outbounds + 15, f'{int(max_outbounds)} Max outbounds', ha='center', color='black')
-        if max_inbounds != 'N/A':
-            # ax.axhline(y=max_inbounds, color='gray', linestyle='-', label='Max inbounds')
-            ax.text(i, max_inbounds, f'{int(max_inbounds)} Max inbounds', ha='center', color='black')
-    # ax.legend()
+        ax.text(i - bar_width, v + 3, str(int(v)), ha='center')
+    for i, v in enumerate(df['total_outbounds']):
+        ax.text(i, v + 3, str(int(v)), ha='center')
+    for i, v in enumerate(df['total_inbounds']):
+        ax.text(i + bar_width, v + 3, str(int(v)), ha='center')
+    ax.legend()
     plt.tight_layout()
-    plt.savefig(os.path.join(EMAILS_REPORT_DIR, 'conversations_per_strategy.png'))
-    # plt.show()
+    plt.savefig(os.path.join(EMAILS_REPORT_DIR, 'chart_conversations_per_strategy.png'))
     print(f"Bar chart stored in ({os.path.relpath(EMAILS_REPORT_DIR, BASE_DIR)}).")
 
-def plot_chart_outbounds_vs_inbounds_per_strategy(strategies):
+def plot_chart_max_conversations_per_thread(strategies):
     df = pd.DataFrame(strategies)
     df = df.transpose()
     df = df.reset_index()
     df = df.rename(columns={'index': 'strategy'})
     df = df.sort_values(by='strategy', ascending=False)
     df.to_csv(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, index=False)
-    print(f"Plot chart outbounds vs inbounds per strategy stored in ({os.path.relpath(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, BASE_DIR)}).")
+    print(f"Plot chart max conversations per thread stored in ({os.path.relpath(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, BASE_DIR)}).")
     df = df[df['strategy'] != 'Total']
     df = df.sort_values(by='total_outbounds', ascending=False)
-    fig, ax = plt.subplots(figsize=(7, 7))
-    ax.bar(df['strategy'], df['total_outbounds'], label='Outbounds per strategy', width=0.2)
-    ax.bar(df['strategy'], df['total_inbounds'], label='Inbounds per strategy', width=0.1, color='orange', align='edge')
-    ax.set_title('Outbounds vs inbounds per strategy')
+    fig, ax = plt.subplots(figsize=(10, 7))
+    bar_width = 0.2
+    indices = range(len(df))
+    ax.bar([x - bar_width*1.5 for x in indices], df['max_conversations'], width=bar_width, label='Max conversations', align='center')
+    ax.bar([x - bar_width*0.5 for x in indices], df['max_outbounds'], width=bar_width, label='Max outbounds', align='center')
+    ax.bar([x + bar_width*0.5 for x in indices], df['max_inbounds'], width=bar_width, label='Max inbounds', align='center')
+    ax.bar([x + bar_width*1.5 for x in indices], df['max_days'], width=bar_width, label='Max days', align='center')
+    ax.set_title('Maximum conversations per thread')
     ax.set_xlabel('Strategy')
     ax.set_ylabel('Conversations')
-    ax.tick_params(axis='x', rotation=45)
-    for i, v in enumerate(df['total_outbounds']):
-        plt.text(i, v - 15, str(int(v)), ha='right')
-    for i, v in enumerate(df['total_inbounds']):
-        plt.text(i, v, str(int(v)), ha='left')
-    # plt.axhline(y=df['total_outbounds'].max(), color='gray', linestyle='-', label='Max outbounds', linewidth=1.5, alpha=0.7, zorder=1, marker='o', markersize=5, markerfacecolor='r')
-    # plt.axhline(y=df['total_outbounds'].min(), color='gray', linestyle='-', label='Min outbounds')
-    plt.axhline(y=df['total_inbounds'].max(), color='gray', linestyle='-', label='Max inbounds', linewidth=1.5, alpha=0.7, zorder=1, marker='o', markersize=5, markerfacecolor='r')
-    plt.axhline(y=df['total_inbounds'].min(), color='gray', linestyle='-', label='Min inbounds')
+    ax.set_xticks(indices)
+    ax.set_xticklabels(df['strategy'], rotation=45)
+    for i, v in enumerate(df['max_conversations']):
+        ax.text(i - bar_width*1.5, v, str(int(v)), ha='center')
+    for i, v in enumerate(df['max_outbounds']):
+        ax.text(i - bar_width*0.5, v, str(int(v)), ha='center')
+    for i, v in enumerate(df['max_inbounds']):
+        ax.text(i + bar_width*0.5, v, str(int(v)), ha='center')
+    for i, v in enumerate(df['max_days']):
+        ax.text(i + bar_width*1.5, v, f"{v:.2f}", ha='center')
     ax.legend()
     plt.tight_layout()
-    plt.savefig(os.path.join(EMAILS_REPORT_DIR, 'outbounds_vs_inbounds_per_strategy.png'))
+    plt.savefig(os.path.join(EMAILS_REPORT_DIR, 'chart_max_conversations_per_thread.png'))
     print(f"Bar chart stored in ({os.path.relpath(EMAILS_REPORT_DIR, BASE_DIR)}).")
-                    
 
+def plot_chart_avg_conversations_per_thread(strategies):
+    df = pd.DataFrame(strategies)
+    df = df.transpose()
+    df = df.reset_index()
+    df = df.rename(columns={'index': 'strategy'})
+    df = df.sort_values(by='strategy', ascending=False)
+    df.to_csv(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, index=False)
+    print(f"Plot chart average conversations per thread stored in ({os.path.relpath(EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV, BASE_DIR)}).")
+    df = df[df['strategy'] != 'Total']
+    df = df.sort_values(by='total_outbounds', ascending=False)
+    fig, ax = plt.subplots(figsize=(10, 7))
+    bar_width = 0.2
+    indices = range(len(df))
+    ax.bar([x - bar_width*1.5 for x in indices], df['avg_conversations'], width=bar_width, label='Average conversations', align='center')
+    ax.bar([x - bar_width*0.5 for x in indices], df['avg_outbounds'], width=bar_width, label='Average outbounds', align='center')
+    ax.bar([x + bar_width*0.5 for x in indices], df['avg_inbounds'], width=bar_width, label='Average inbounds', align='center')
+    ax.bar([x + bar_width*1.5 for x in indices], df['avg_days'], width=bar_width, label='Average days', align='center')
+    ax.set_title('Average conversations per thread')
+    ax.set_xlabel('Strategy')
+    ax.set_ylabel('Conversations')
+    ax.set_xticks(indices)
+    ax.set_xticklabels(df['strategy'], rotation=45)
+    for i, v in enumerate(df['avg_conversations']):
+        ax.text(i - bar_width*1.5, v, f"{v:.2f}", ha='center')
+    for i, v in enumerate(df['avg_outbounds']):
+        ax.text(i - bar_width*0.5, v, f"{v:.2f}", ha='center')
+    for i, v in enumerate(df['avg_inbounds']):
+        ax.text(i + bar_width*0.5, v, f"{v:.2f}", ha='center')
+    for i, v in enumerate(df['avg_days']):
+        ax.text(i + bar_width*1.5, v, f"{v:.2f}", ha='center')
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(EMAILS_REPORT_DIR, 'chart_avg_conversations_per_thread.png'))
+    print(f"Bar chart stored in ({os.path.relpath(EMAILS_REPORT_DIR, BASE_DIR)}).")
 
 if __name__ == "__main__":
     print(f"Running...")
-    hide_emails = True
+    hide_emails = HIDE_EMAILS
     print(f"1. Checking duplicate emails in ({os.path.relpath(MAIL_SAVE_DIR, BASE_DIR)})...")
     check_duplicate_queued_emails(hide_emails=hide_emails)
     print(f"2. Completed checking duplicate emails. Stored unique and duplicate emails in ({os.path.relpath(UNIQUE_EMAIL_QUEUED, BASE_DIR)}) and ({os.path.relpath(UNIQUE_EMAIL_QUEUED_DUPLICATE, BASE_DIR)}) respectively.")

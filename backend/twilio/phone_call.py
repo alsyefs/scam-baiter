@@ -1,7 +1,7 @@
 import random
 from globals import (
     TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
-    TWILIO_CALL_URL, TWILIO_PHONE_NUMBERS
+    TWILIO_CALL_URL, TWILIO_PHONE_NUMBERS, TWILIO_RECORDING_STATUS_CALLBACK_URL
 )
 from logs import LogManager
 log = LogManager.get_logger()
@@ -10,15 +10,19 @@ from twilio.rest import Client
 from database.calls_table import CallsDatabaseManager
 
 def call_number(to_number):
-    call_from = random.choice(TWILIO_PHONE_NUMBERS)  # set from to a random number from the list of numbers
+    call_from = random.choice(TWILIO_PHONE_NUMBERS)  # set 'call_from' to a random number from the list of numbers
+    # call_from = TWILIO_PHONE_NUMBERS[0]  # I am testing with the first number in the list
     try:
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
         call = client.calls.create(
             url=TWILIO_CALL_URL,
             to=to_number,
-            from_=call_from
+            from_=call_from,
+            record=True,
+            recording_status_callback=TWILIO_RECORDING_STATUS_CALLBACK_URL
         )
-        log.info(f"Call made from ({call_from}) to ({to_number}).")
+        # service = client.intelligence.v2.services.create(unique_name='unique_name')
+        log.info(f"Call request made from ({call_from}) to ({to_number}).")
         CallsDatabaseManager.insert_call(from_call=call_from,
                                          to_call=to_number,
                                          call_sid=call.sid,
