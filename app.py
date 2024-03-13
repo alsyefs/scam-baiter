@@ -208,10 +208,7 @@ if __name__ == "__main__":
     # Initialize scheduler:
     run_scheduler() # run this to start the scheduler in the background
     initialize_app()
-
     # socketio.run(app, host="0.0.0.0", port=HTTP_SERVER_PORT, debug=True) # run this to start the server with socketio
-
-
     # server = pywsgi.WSGIServer(('', HTTP_SERVER_PORT), app, handler_class=WebSocketHandler)
     # print(f"Server listening on: (http://localhost:{str(HTTP_SERVER_PORT)}) with WebSocketHandler: ({WebSocketHandler})")
     # server.serve_forever()
