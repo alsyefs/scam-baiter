@@ -97,8 +97,9 @@ def signup():
             confirm_password = request.form.get('confirm_password')
             if not re.match(r"[^@]+@bristol\.ac\.uk$", username):
                 pass
+                # return "Username must be an email ending with @bristol.ac.uk"
             if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?/~`'-=|\\])[A-Za-z\d!@#$%^&*()_+{}\[\]:;<>,.?/~`'-=|\\]{8,}$", password):
-                return "Username must be an email ending with @bristol.ac.uk"
+                return "Password must contain at least 8 characters, including at least one uppercase letter, one lowercase letter, one number and one special character."
             if password != confirm_password:
                 return "Passwords do not match"
             if password == confirm_password:

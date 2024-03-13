@@ -1,6 +1,7 @@
 {
     "editor.inlineSuggest.showToolbar": "onHover",
     "python.analysis.extraPaths": [
-        "./backend"
+        "./backend",
+        "./backend/models/tts"
     ]
 }

@@ -8,6 +8,7 @@ from globals import(
   GPT_CHAT_1_INSTRUCTIONS, GPT_CHAT_2_INSTRUCTIONS, GPT_CHAT_3_INSTRUCTIONS
 )
 from .chatgpt import generate_text
+from .chatgpt_async import generate_text_async
 
 openai.api_key = OPENAI_API_KEY
 def gen_text1(prompt):
@@ -26,9 +27,14 @@ def gen_text2(prompt):
 
 def gen_text3(prompt):
   gpt_model = "gpt-3.5-turbo"
-  prompt = "Reply without any signature: " + prompt
   messages=[{"role": "system", "content": GPT_CHAT_3_INSTRUCTIONS}, {"role": "user", "content": prompt}]
   res = generate_text(gpt_model, messages, 0.2, 0.2)
+  return res
+
+async def gen_text3_async(prompt):
+  gpt_model = "gpt-3.5-turbo"
+  messages=[{"role": "system", "content": GPT_CHAT_3_INSTRUCTIONS}, {"role": "user", "content": prompt}]
+  res = await generate_text_async(gpt_model, messages, 0.2, 0.2)
   return res
 
 def fileread(filename, names, a):

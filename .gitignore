@@ -1,11 +1,17 @@
 # Secret
 /backend/secret.py
 /backend/database/system.db
-/backend/models/history.json
-/backend/emails/
 /backend/cache/
 /backend/data/audio_files/
 /backend/data/scammers_phone_numbers.json
+
+# /backend/models/history.json
+
+/backend/emails/
+/backend/emails/archive/
+/backend/emails/handled/
+/backend/emails/queued/
+/backend/emails/record.json
 # /backend/models
 
 # Byte-compiled / optimized / DLL files

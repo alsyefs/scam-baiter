@@ -25,7 +25,12 @@ pyenchant
 openai==1.11.1
 flair
 names
+# Flask==1.0.2
 Flask
+flask[async] # or pip install 'flask[async]'
+flask-socketio
+# flask-sockets
+flask-sock
 requests
 APScheduler # for scheduling tasks
 flask-sqlalchemy==3.0.2
@@ -36,3 +41,15 @@ TTS # https://github.com/coqui-ai/TTS # This requires C++ build tools version 14
 # google-cloud-texttospeech # for google cloud text to speech
 twilio # Phone number service for making phone calls, sending sms, etc.
 tqdm
+aiohttp
+pydub
+# simpleaudio # It used to work but now it doesn't exists in pip
+# pyaudio # It used to work but now it doesn't exists in pip
+httpx
+websockets
+eventlet
+nest_asyncio
+gevent
+gevent-websocket
+greenlet
+assemblyai

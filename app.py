@@ -4,9 +4,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 import os
 import traceback
-
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 from backend import emailing_service
+from socketio_instance import socketio, sock
+
 from logs import LogManager
 log = LogManager.get_logger()
 from globals import (
@@ -17,7 +18,8 @@ from globals import (
     NOTSET_LOGS_TEXT_FILE_PATH, FLASK_SECRET_KEY,
     DEFAULT_SUPER_ADMIN_USERNAME, DEFAULT_SUPER_ADMIN_PASSWORD,
     DEFAULT_ADMIN_USERNAME, DEFAULT_USER_USERNAME, DEFAULT_USER_PASSWORD,
-    DEFAULT_ADMIN_PASSWORD, CRON_JOB_PATH, MAILGUN_DOMAIN_NAME
+    DEFAULT_ADMIN_PASSWORD, CRON_JOB_PATH, MAILGUN_DOMAIN_NAME,
+    HTTP_SERVER_PORT
 )
 from werkzeug.security import generate_password_hash
 import shutil
@@ -37,8 +39,15 @@ from backend.endpoints.twilio import twilio_bp
 from backend.endpoints.logs import logs_bp
 from backend.endpoints.old_conversations import old_conversations_bp
 from backend.cron_scheduler import run_scheduler
+import nest_asyncio
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
 
 app = Flask(__name__)
+socketio.init_app(app, async_mode=None, cors_allowed_origins="*")
+# sockets.init_app(app)
+sock.init_app(app)
+
 app.register_blueprint(users_bp)
 app.register_blueprint(roles_bp)
 app.register_blueprint(gpt_bp)
@@ -51,7 +60,7 @@ app.register_blueprint(old_conversations_bp)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SECRET_KEY'] = FLASK_SECRET_KEY
 db_models.init_app(app)
-
+nest_asyncio.apply()
 app.logger.setLevel(LOGGING_LEVEL)
 app.logger.propagate = True
 
@@ -199,4 +208,11 @@ if __name__ == "__main__":
     # Initialize scheduler:
     run_scheduler() # run this to start the scheduler in the background
     initialize_app()
-    app.run(host="0.0.0.0", port=10234, debug=True)
+
+    # socketio.run(app, host="0.0.0.0", port=HTTP_SERVER_PORT, debug=True) # run this to start the server with socketio
+
+
+    # server = pywsgi.WSGIServer(('', HTTP_SERVER_PORT), app, handler_class=WebSocketHandler)
+    # print(f"Server listening on: (http://localhost:{str(HTTP_SERVER_PORT)}) with WebSocketHandler: ({WebSocketHandler})")
+    # server.serve_forever()
+    app.run(host="0.0.0.0", port=HTTP_SERVER_PORT, debug=True)

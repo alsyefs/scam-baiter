@@ -1,5 +1,5 @@
 from flask import session
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 import re
 from database.models import db_models
 from database.gpt_table import GPTDatabaseManager
@@ -9,9 +9,11 @@ from globals import (
 )
 from logs import LogManager
 log = LogManager.get_logger()
-client = OpenAI(api_key=OPENAI_API_KEY)
+# import httpx
+# client = httpx.AsyncClient(api_key=OPENAI_API_KEY)
+client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
-def generate_text(gpt_model, messages, temperature=0.2, top_p=0.2):
+async def generate_text_async(gpt_model, messages, temperature=0.2, top_p=0.2):
     general_message = "Apologies, but I do not know what do you mean by that."
     prompt = None
     completion = None
@@ -35,7 +37,13 @@ def generate_text(gpt_model, messages, temperature=0.2, top_p=0.2):
             gpt_instructions = ""
         if prompt is None:
             prompt = ""
-        completion = client.chat.completions.create(model=gpt_model, messages=messages, temperature=temperature, top_p=top_p, stop=GPT_STOP_SEQUENCES, presence_penalty=GPT_PRESENCE_PENALTY, frequency_penalty=GPT_FREQUENCY_PENALTY)
+        completion = await client.chat.completions.create(model=gpt_model,
+                                                          messages=messages,
+                                                          temperature=temperature,
+                                                          top_p=top_p,
+                                                          stop=GPT_STOP_SEQUENCES,
+                                                          presence_penalty=GPT_PRESENCE_PENALTY,
+                                                          frequency_penalty=GPT_FREQUENCY_PENALTY)
         GPTDatabaseManager.insert_gpt(prompt, completion.choices[0].message.content, gpt_instructions, gpt_model, temperature, MAX_TOKENS, stop_sequences_str, top_p, GPT_PRESENCE_PENALTY, GPT_FREQUENCY_PENALTY, username)
     except Exception as e:
         log.error(f"GPT error when generating text: {e}")
@@ -54,4 +62,4 @@ if __name__ == "__main__":
         {"role": "system", "content": "You are a human."},
         {"role": "user", "content": "I am a human."}
     ]
-    print(generate_text(gpt_model = "gpt-3.5-turbo", messages=messages))
+    print(generate_text_async(gpt_model = "gpt-3.5-turbo", messages=messages))

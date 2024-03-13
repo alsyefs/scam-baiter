@@ -16,10 +16,10 @@ from globals import (
     EMAIL_CONVERSATIONS_REPORT_CSV, EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV
 )
 HIDE_EMAILS = True
-# CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1' # old strategy name
-# CHAT_2_STRATEGY_NAME = 'gpt-4-Chat2' # old strategy name
-CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1'          # new strategy name
-CHAT_2_STRATEGY_NAME = 'gpt-3.5-turbo-Chat2'  # new strategy name
+# CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1' # old strategy name, uncompress emails_old_gpt.zip
+# CHAT_2_STRATEGY_NAME = 'gpt-4-Chat2' # old strategy name, uncompress emails_old_gpt.zip
+CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1'          # new strategy name, uncompress emails_new_gpt.zip
+CHAT_2_STRATEGY_NAME = 'gpt-3.5-turbo-Chat2'  # new strategy name, uncompress emails_new_gpt.zip
 
 def get_sol_from_addr_sol_path(email_to, email_from):
     with open(ADDR_SOL_PATH, 'r') as f:

@@ -6,10 +6,12 @@
 <div class="container-fluid mt-4">
   <div class="row">
     <div class="col-md-4">
-      <div class="row">
+      <div class="row d-flex">
         <input type="number" class="form-control mb-4" id="to-number" placeholder="Enter phone number to call">
         <p id="number-error" style="color:red;"></p>      
-        <button id="submit-call" class="btn btn-primary">Call</button>
+        <button id="submit-call-synchronous" class="btn btn-primary">Call Synchronous</button>
+        <button id="submit-call-asynchronous" class="btn btn-primary">Call Asynchronous</button>
+        <button id="submit-call-socket" class="btn btn-primary">Call Socket</button>
       </div>
       <br>
       <div class="row">
@@ -44,7 +46,7 @@
             }
             return correct;
         }
-        document.getElementById('submit-call').addEventListener('click', function() {
+        document.getElementById('submit-call-synchronous').addEventListener('click', function() {
             var twilioResponse = document.getElementById('twilio-response');
             twilioResponse.innerHTML = "";
             var toNumber = document.getElementById('to-number').value;
@@ -57,7 +59,65 @@
                 var requestBody = {
                     toNumber: toNumber
                 };
-                fetch('/make_call', {
+                fetch('/make_call_synchronous', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response:', data);
+                    twilioResponse.innerHTML = "status: '" + data.status + "'. message: '" + data.message + "'" || "No response.";
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    twilioResponse.innerHTML = "Error: '" + error + "'";
+                });
+            }
+        });
+        document.getElementById('submit-call-asynchronous').addEventListener('click', function() {
+            var twilioResponse = document.getElementById('twilio-response');
+            twilioResponse.innerHTML = "";
+            var toNumber = document.getElementById('to-number').value;
+            console.log('validating your entered number (' + toNumber + ')');
+            if (!isValidNumber(toNumber)) {
+                return;
+            }
+            console.log('Caling (' + toNumber + ')...');
+            if (toNumber.trim() !== '') {
+                var requestBody = {
+                    toNumber: toNumber
+                };
+                fetch('/make_call_asynchronous', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response:', data);
+                    twilioResponse.innerHTML = "status: '" + data.status + "'. message: '" + data.message + "'" || "No response.";
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    twilioResponse.innerHTML = "Error: '" + error + "'";
+                });
+            }
+        });
+        document.getElementById('submit-call-socket').addEventListener('click', function() {
+            var twilioResponse = document.getElementById('twilio-response');
+            twilioResponse.innerHTML = "";
+            var toNumber = document.getElementById('to-number').value;
+            console.log('validating your entered number (' + toNumber + ')');
+            if (!isValidNumber(toNumber)) {
+                return;
+            }
+            console.log('Caling (' + toNumber + ')...');
+            if (toNumber.trim() !== '') {
+                var requestBody = {
+                    toNumber: toNumber
+                };
+                fetch('/make_call_socket', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
