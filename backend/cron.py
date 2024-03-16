@@ -4,6 +4,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0 = TensorFlow all messages are logg
                                           # 1 = TensorFlow INFO messages are not printed
                                           # 2 = TensorFlow INFO and WARNING messages are not printed
                                           # 3 = TensorFlow INFO, WARNING, and ERROR messages are not printed
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+import tensorflow as tf
 import shutil
 import sys
 import traceback

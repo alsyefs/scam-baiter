@@ -3,9 +3,9 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <h5>Old conversations</h5>
+        <h2>Old conversations</h2>
         <div class="table-responsive">
-            <table class="table table-striped table-bordered">
+            <table class="table table-striped table-bordered" id="conversations-table">
                 <thead>
                     <tr>
                         <th>id</th>
@@ -17,7 +17,7 @@
                         <th>Outbound message</th>
                     </tr>
                 </thead>
-                <tbody id="old-conversations-table-body">
+                <tbody>
                     <tr id="loading-message">
                         <td colspan="7" class="text-center">
                             <div class="spinner-border text-primary" role="status">
@@ -27,35 +27,157 @@
                     </tr>
                 </tbody>
             </table>
+            <nav aria-label="Conversations pagination 1">
+                <ul class="pagination justify-content-center" id="conversations-pagination-1"></ul>
+            </nav>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="oldConversationsModal" tabindex="-1" role="dialog" aria-labelledby="oldConversationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="oldConversationsModalLabel">oldConversation Details</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            <!-- Details will be inserted here -->
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var url = '/select_all';
-    fetch(url).then(response => response.json()).then(data => {
-        populateTable(data);
-        var loadingMessage = document.getElementById('loading-message');
-        if(loadingMessage) {loadingMessage.remove();}
-    }).catch(error => {
-        console.error('Error:', error);
-        var loadingMessage = document.getElementById('loading-message');
-        if(loadingMessage) {loadingMessage.remove();}
-        var TableBody = document.getElementById('old-conversations-table-body');
-        TableBody.innerHTML = '<tr><td colspan="7" class="text-center">Failed to load data.</td></tr>';
-    });
+    loadTableData();
+    fetchDataCount();
 });
-function populateTable(data) {
-    var TableBody = document.getElementById('old-conversations-table-body');
-    TableBody.innerHTML = '';
-    data.forEach(data => {
-        var row = TableBody.insertRow();
-        Object.keys(data).forEach(key => {
-            var cell = row.insertCell();
-            cell.textContent = data[key];
+
+function loadTableData(page = 1, endpoint = `/select_all_pages`) {
+    endpoint += `?page=${page}`;
+    fetch(endpoint)
+        .then(response => response.json())
+        .then(conversations => {
+            const conversationsTableBody = document.getElementById('conversations-table').querySelector('tbody');
+            conversationsTableBody.innerHTML = '';
+            if (conversations.length === 0) {
+                const noDataRow = conversationsTableBody.insertRow();
+                noDataRow.innerHTML = `<td colspan="7" class="text-center">No data available for this filter.</td>`;
+            } else {
+                conversations.forEach(conversation => {
+                    const row = conversationsTableBody.insertRow();
+                    row.innerHTML = `
+                    <td>${conversation.id}</td>
+                    <td>${conversation.file_name.substring(0, 10)}...</td>
+                    <td>${conversation.strategy.substring(0, 10)}...</td>
+                    <td>${conversation.inbound_time.substring(0, 10)}...</td>
+                    <td>${conversation.inbound_message.substring(0, 10)}...</td>
+                    <td>${conversation.outbound_time.substring(0, 10)}...</td>
+                    <td>${conversation.outbound_message.substring(0, 10)}...</td>
+                    `;
+                    // Add click event listener to the row
+                    row.addEventListener('click', () => {
+                        document.querySelector('#oldConversationsModal .modal-body').innerHTML = `
+                            <p><strong style="text-decoration: underline;">ID:</strong><br> ${conversation.id}</p>
+                            <p><strong style="text-decoration: underline;">File name:</strong><br> ${conversation.file_name}</p>
+                            <p><strong style="text-decoration: underline;">Strategy:</strong><br> ${conversation.strategy}</p>
+                            <p><strong style="text-decoration: underline;">Inbound time:</strong><br> ${conversation.inbound_time}</p>
+                            <p><strong style="text-decoration: underline;">Inbound message:</strong><br> ${conversation.inbound_message}</p>
+                            <p><strong style="text-decoration: underline;">Outbound time:</strong><br> ${conversation.outbound_time}</p>
+                            <p><strong style="text-decoration: underline;">Outbound message:</strong><br> ${conversation.outbound_message}</p>
+                        `;
+                        $('#oldConversationsModal').modal('show');
+                    });
+                });
+            }
+            if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
+        })
+        .catch(error => {
+            if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
+            console.error('Error:', error);
+            conversationsTableBody.innerHTML = `<td colspan="7" class="text-center">Error loading data.</td>`;
         });
-    });
+        fetchDataCount(page);
+}
+
+function renderPagination(currentPage, totalConversations, conversationsPerPage = 100) {
+    const totalPages = Math.ceil(totalConversations / conversationsPerPage);
+    const paginationUl_1 = document.getElementById('conversations-pagination-1');
+    paginationUl_1.innerHTML = '';
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    if (currentPage < Math.floor(maxPagesToShow / 2)) {
+        endPage = Math.min(totalPages, maxPagesToShow);
+        startPage = 1;
+    } else if (currentPage > totalPages - Math.floor(maxPagesToShow / 2)) {
+        startPage = Math.max(1, totalPages - maxPagesToShow + 1);
+    }
+    const addPageItem = (pageNum, text = pageNum) => {
+        const li = document.createElement('li');
+        li.className = 'page-item' + (pageNum === currentPage ? ' active' : '');
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.innerText = text;
+        a.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadTableData(pageNum);
+        });
+        li.appendChild(a);
+        paginationUl_1.appendChild(li);
+    };
+    if (currentPage > 1) {
+        addPageItem(1, 'First');
+        addPageItem(currentPage - 1, 'Previous');
+    }
+    if (startPage > 1) {
+        addPageItem(1);
+        if (startPage > 2) {
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            const span = document.createElement('span');
+            span.className = 'page-link';
+            span.innerHTML = '...';
+            li.appendChild(span);
+            paginationUl_1.appendChild(li);
+        }
+    }
+    for (let i = startPage; i <= endPage; i++) {
+        addPageItem(i);
+    }
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            const span = document.createElement('span');
+            span.className = 'page-link';
+            span.innerHTML = '...';
+            li.appendChild(span);
+            paginationUl_1.appendChild(li);
+        }
+        addPageItem(totalPages);
+    }
+    if (currentPage < totalPages) {
+        addPageItem(currentPage + 1, 'Next');
+        addPageItem(totalPages, 'Last');
+    }
+}
+function fetchDataCount(currentPage = 1) {
+    fetch('/get_conversation_count')
+        .then(response => response.json())
+        .then(data => {
+            const totalGPTs = data.count;
+            console.log('Total GPTs:', totalGPTs);
+            renderPagination(currentPage, totalGPTs);
+        })
+        .catch(error => console.error('Error:', error));
 }
 </script>
 {% endblock %}

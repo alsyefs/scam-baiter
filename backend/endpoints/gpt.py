@@ -139,3 +139,81 @@ def gpt_interactions():
 def select_all_gpt_interactions():
     gpts = GPTDatabaseManager.get_gpts()
     return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/select_all_gpt_interactions_pages')
+@requires_roles('admin', 'super admin')
+def select_all_gpt_interactions_pages():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
+    gpts = GPTDatabaseManager.get_gpts_pages(page=page, per_page=per_page)
+    return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/get_gpt_count')
+@requires_roles('admin', 'super admin')
+def get_gpt_count():
+    count = GPTDatabaseManager.get_gpt_count()
+    return jsonify({'count': count}), 200
+
+@gpt_bp.route('/get_gpt_by_id_pages/<int:gpt_id>')
+@requires_roles('admin', 'super admin')
+def get_gpt_by_id_pages():
+    page = request.args.get('page', default=1, type=int)
+    gpt_id = request.args.get('gpt_id')
+    gpts = GPTDatabaseManager.get_gpt_by_id_pages(id=gpt_id, page=page, per_page=100)
+    return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/get_gpts_by_username_pages/<string:username>')
+@requires_roles('admin', 'super admin')
+def get_gpts_by_username_pages():
+    page = request.args.get('page', default=1, type=int)
+    username = request.args.get('username')
+    gpts = GPTDatabaseManager.get_gpts_by_username_pages(username=username, page=page, per_page=100)
+    return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/get_gpts_by_date_pages/<string:date>')
+@requires_roles('admin', 'super admin')
+def get_gpts_by_date_pages():
+    page = request.args.get('page', default=1, type=int)
+    date = request.args.get('date')
+    gpts = GPTDatabaseManager.get_gpts_by_date_pages(date=date, page=page, per_page=100)
+    return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/get_gpts_by_date_and_username_pages/<string:date>/<string:username>')
+@requires_roles('admin', 'super admin')
+def get_gpts_by_date_and_username_pages():
+    page = request.args.get('page', default=1, type=int)
+    date = request.args.get('date')
+    username = request.args.get('username')
+    gpts = GPTDatabaseManager.get_gpts_by_date_and_username_pages(date=date, username=username, page=page, per_page=100)
+    return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/get_gpts_by_model_pages/<string:model>')
+@requires_roles('admin', 'super admin')
+def get_gpts_by_model_pages():
+    page = request.args.get('page', default=1, type=int)
+    model = request.args.get('model')
+    gpts = GPTDatabaseManager.get_gpts_by_model_pages(model=model, page=page, per_page=100)
+    return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/get_gpts_by_model_and_username_pages/<string:model>/<string:username>')
+@requires_roles('admin', 'super admin')
+def get_gpts_by_model_and_username_pages():
+    page = request.args.get('page', default=1, type=int)
+    model = request.args.get('model')
+    username = request.args.get('username')
+    gpts = GPTDatabaseManager.get_gpts_by_model_and_username_pages(model=model, username=username, page=page, per_page=100)
+    return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/get_gpts_by_system_pages')
+@requires_roles('admin', 'super admin')
+def get_gpts_by_system_pages():
+    page = request.args.get('page', default=1, type=int)
+    gpts = GPTDatabaseManager.get_gpts_by_system_pages(page=page, per_page=100)
+    return jsonify([dict(gpt) for gpt in gpts])
+
+@gpt_bp.route('/get_gpts_by_users_pages')
+@requires_roles('admin', 'super admin')
+def get_gpts_by_users_pages():
+    page = request.args.get('page', default=1, type=int)
+    gpts = GPTDatabaseManager.get_gpts_by_users_pages(page=page, per_page=100)
+    return jsonify([dict(gpt) for gpt in gpts])

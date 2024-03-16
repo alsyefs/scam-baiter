@@ -2,66 +2,285 @@
 {% block title %}GPT Interactions{% endblock %}
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
-        <h5>GPT Interactions</h5>
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>Prompt</th>
-                        <th>Generated text</th>
-                        <th>Instructions</th>
-                        <th>Model</th>
-                        <th>Temperature</th>
-                        <th>Max length</th>
-                        <th>Stop sequence</th>
-                        <th>Top P</th>
-                        <th>Frequency penalty</th>
-                        <th>Presence penalty</th>
-                        <th>Submission datetime</th>
-                        <th>By username</th>
-                    </tr>
-                </thead>
-                <tbody id="gpt-interactions-table-body">
-                    <tr id="loading-message">
-                        <td colspan="13" class="text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <h2>GPT Interactions</h2>
+
+    
+    <!-- Filter Section -->
+    <div class="filter-section d-flex align-items-center">
+        <h4>Filters</h4>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="gptFilter" id="filterAll" value="all" checked>
+            <label class="form-check-label" for="filterAll">All</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="gptFilter" id="filterBySystem" value="BySystem">
+            <label class="form-check-label" for="filterBySystem">By system</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="gptFilter" id="filterOutbound" value="ByUser">
+            <label class="form-check-label" for="filterByUser">By users</label>
+        </div>
+        <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+        <button class="btn btn-secondary" onclick="downloadCSV()">Download as CSV</button>
+    </div>
+    
+    <table class="table table-striped" id="gpts-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Prompt</th>
+                <th>Generated text</th>
+                <th>Instructions</th>
+                <th>Model</th>
+                <th>Temperature</th>
+                <th>Max length</th>
+                <th>Stop sequence</th>
+                <th>Top P</th>
+                <th>Frequency penalty</th>
+                <th>Presence penalty</th>
+                <th>Submission datetime</th>
+                <th>By username</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="loading-message">
+                <td colspan="13" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <nav aria-label="GPT pagination 1">
+        <ul class="pagination justify-content-center" id="gpt-pagination-1"></ul>
+    </nav>
+  
+    <!-- Modal -->
+    <div class="modal fade" id="gptModal" tabindex="-1" role="dialog" aria-labelledby="gptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="gptModalLabel">GPT Interaction Details</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            <!-- Details will be inserted here -->
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
         </div>
     </div>
+    
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var url = '/select_all_gpt_interactions';
-    fetch(url).then(response => response.json()).then(data => {
-        populateTable(data);
-        if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
-    }).catch(error => {
-        console.error('Error:', error);
-        if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
-        var TableBody = document.getElementById('gpt-interactions-table-body');
-        TableBody.innerHTML = '<tr><td colspan="13" class="text-center">Failed to load data.</td></tr>';
-    });
+    loadGPTsPages();
+    fetchGPTCount();
 });
-function populateTable(data) {
-    console.log(data);
-    const tableBody = document.getElementById('gpt-interactions-table-body');
-    tableBody.innerHTML = data.length ? '' : '<tr><td colspan="13" class="text-center">No data available.</td></tr>';
-    data.forEach(item => {
-        const row = tableBody.insertRow();
-        const keys = ['id', 'prompt', 'generated_text', 'instructions', 'model', 'temperature', 'max_length', 'stop_sequences', 'top_p', 'frequency_penalty', 'presence_penalty', 'submission_datetime', 'username'];
-        keys.forEach(key => {
-            console.log(key + ": " + item[key]);
-            row.insertCell().textContent = item[key];
+function loadGPTsPages(page = 1, endpoint = `/select_all_gpt_interactions_pages`) {
+    endpoint += `?page=${page}`;
+    fetch(endpoint)
+        .then(response => response.json())
+        .then(gpts => {
+            const gptsTableBody = document.getElementById('gpts-table').querySelector('tbody');
+            gptsTableBody.innerHTML = '';
+            if (gpts.length === 0) {
+                // If no GPTs are returned, display a message
+                const noDataRow = gptsTableBody.insertRow();
+                noDataRow.innerHTML = `<td colspan="13" class="text-center">No data available for this filter.</td>`;
+            } else {
+                gpts.forEach(gpt => {
+                    const row = gptsTableBody.insertRow();
+                    row.innerHTML = `
+                    <td>${gpt.id}</td>
+                    <td>${gpt.prompt.substring(0, 10)}...</td>
+                    <td>${gpt.generated_text.substring(0, 10)}...</td>
+                    <td>${gpt.instructions.substring(0, 10)}...</td>
+                    <td>${gpt.model.substring(0, 10)}...</td>
+                    <td>${gpt.temperature}</td>
+                    <td>${gpt.max_length}</td>
+                    <td>${gpt.stop_sequences ? gpt.stop_sequences.substring(0, 10) + '...' : ''}</td>
+                    <td>${gpt.top_p}</td>
+                    <td>${gpt.frequency_penalty}</td>
+                    <td>${gpt.presence_penalty}</td>
+                    <td>${gpt.submission_datetime.substring(5, 16)}</td>
+                    <td>${gpt.username ? gpt.username.substring(0, 10) + '...' : 'system'}</td>
+                    `;
+                    // Add click event listener to the row
+                    row.addEventListener('click', () => {
+                        document.querySelector('#gptModal .modal-body').innerHTML = `
+                            <p><strong style="text-decoration: underline;">ID:</strong><br> ${gpt.id}</p>
+                            <p><strong style="text-decoration: underline;">Prompt:</strong><br> ${gpt.prompt}</p>
+                            <p><strong style="text-decoration: underline;">Generated Text:</strong><br> ${gpt.generated_text}</p>
+                            <p><strong style="text-decoration: underline;">Instructions:</strong><br> ${gpt.instructions}</p>
+                            <p><strong style="text-decoration: underline;">Model:</strong><br> ${gpt.model}</p>
+                            <p><strong style="text-decoration: underline;">Temperature:</strong><br> ${gpt.temperature}</p>
+                            <p><strong style="text-decoration: underline;">Max Length:</strong><br> ${gpt.max_length}</p>
+                            <p><strong style="text-decoration: underline;">Stop Sequences:</strong><br> ${gpt.stop_sequences}</p>
+                            <p><strong style="text-decoration: underline;">Top P:</strong><br> ${gpt.top_p}</p>
+                            <p><strong style="text-decoration: underline;">Frequency Penalty:</strong><br> ${gpt.frequency_penalty}</p>
+                            <p><strong style="text-decoration: underline;">Presence Penalty:</strong><br> ${gpt.presence_penalty}</p>
+                            <p><strong style="text-decoration: underline;">Submission Datetime:</strong><br> ${gpt.submission_datetime}</p>
+                            <p><strong style="text-decoration: underline;">By Username:</strong><br> ${gpt.username ? gpt.username : 'system'}</p>
+                        `;
+                        $('#gptModal').modal('show');
+                    });
+                });
+            }
+            if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
+        })
+        .catch(error => {
+            if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
+            console.error('Error:', error);
+            gptsTableBody.innerHTML = `<td colspan="13" class="text-center">Error loading data.</td>`;
         });
-    });
+        fetchGPTCount(page);
+}
+function applyFilters() {
+    let selectedFilter = document.querySelector('input[name="gptFilter"]:checked').value;
+    let endpoint = '/select_all_gpt_interactions_pages'; // Default to all gpts
+    if (selectedFilter === 'BySystem') {
+        endpoint = '/get_gpts_by_system_pages';
+    } else if (selectedFilter === 'ByUser') {
+        endpoint = '/get_gpts_by_users_pages';
+    }
+    loadGPTsPages(page=1, endpoint=endpoint);
+}
+function escapeCSVField(field) {
+    if (typeof field !== 'string') {
+        return field; // Handle non-string fields
+    }
+    let escapedField = field.replace(/"/g, '""'); // Escape double quotes
+    escapedField = escapedField.replace(/\n/g, ' '); // Replace newline characters with space
+    if (escapedField.includes(',') || escapedField.includes('\n') || escapedField.includes('"')) {
+        escapedField = `"${escapedField}"`; // Wrap in double quotes if needed
+    }
+    return escapedField;
+}
+function downloadCSV() {
+    let selectedFilter = document.querySelector('input[name="gptFilter"]:checked').value;
+    let endpoint = '/select_all_gpt_interactions';
+    let file_name = 'gpt_interactions.csv';
+    if (selectedFilter === 'BySystem') {
+        endpoint = '/get_gpts_by_system_pages';
+        file_name = 'gpt_interactions_by_system.csv';
+    } else if (selectedFilter === 'ByUser') {
+        endpoint = '/get_gpts_by_users_pages';
+        file_name = 'gpt_interactions_by_users.csv';
+    }  
+    fetch(endpoint)
+        .then(response => response.json())
+        .then(gpts => {
+            csvContent = "id,prompt,generated_text,instructions,model,temperature,max_length,stop_sequences,top_p,frequency_penalty,presence_penalty,submission_datetime,username\n";
+            gpts.forEach(gpt => {
+                const row = [
+                gpt.id,
+                    escapeCSVField(gpt.prompt),
+                    escapeCSVField(gpt.generated_text),
+                    escapeCSVField(gpt.instructions),
+                    escapeCSVField(gpt.model),
+                    gpt.temperature,
+                    gpt.max_length,
+                    gpt.stop_sequences,
+                    gpt.top_p,
+                    gpt.frequency_penalty,
+                    gpt.presence_penalty,
+                    gpt.submission_datetime,
+                    gpt.username ? gpt.username : 'system'
+                ].join(',');
+                csvContent += row + '\n';
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", file_name);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        })
+        .catch(error => console.error('Error:', error));
+}
+function renderPagination(currentPage, totalGPTs, gptsPerPage = 100) {
+    const totalPages = Math.ceil(totalGPTs / gptsPerPage);
+    const paginationUl_1 = document.getElementById('gpt-pagination-1');
+    paginationUl_1.innerHTML = '';
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    if (currentPage < Math.floor(maxPagesToShow / 2)) {
+        endPage = Math.min(totalPages, maxPagesToShow);
+        startPage = 1;
+    } else if (currentPage > totalPages - Math.floor(maxPagesToShow / 2)) {
+        startPage = Math.max(1, totalPages - maxPagesToShow + 1);
+    }
+    const addPageItem = (pageNum, text = pageNum) => {
+        const li = document.createElement('li');
+        li.className = 'page-item' + (pageNum === currentPage ? ' active' : '');
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.innerText = text;
+        a.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadGPTsPages(pageNum);
+        });
+        li.appendChild(a);
+        paginationUl_1.appendChild(li);
+    };
+    if (currentPage > 1) {
+        addPageItem(1, 'First');
+        addPageItem(currentPage - 1, 'Previous');
+    }
+    if (startPage > 1) {
+        addPageItem(1);
+        if (startPage > 2) {
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            const span = document.createElement('span');
+            span.className = 'page-link';
+            span.innerHTML = '...';
+            li.appendChild(span);
+            paginationUl_1.appendChild(li);
+        }
+    }
+    for (let i = startPage; i <= endPage; i++) {
+        addPageItem(i);
+    }
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            const span = document.createElement('span');
+            span.className = 'page-link';
+            span.innerHTML = '...';
+            li.appendChild(span);
+            paginationUl_1.appendChild(li);
+        }
+        addPageItem(totalPages);
+    }
+    if (currentPage < totalPages) {
+        addPageItem(currentPage + 1, 'Next');
+        addPageItem(totalPages, 'Last');
+    }
+}
+
+function fetchGPTCount(currentPage = 1) {
+    fetch('/get_gpt_count')
+        .then(response => response.json())
+        .then(data => {
+            const totalGPTs = data.count;
+            console.log('Total GPTs:', totalGPTs);
+            renderPagination(currentPage, totalGPTs);
+        })
+        .catch(error => console.error('Error:', error));
 }
 </script>
 {% endblock %}

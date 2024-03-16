@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, session, redirect, url_for, flash, Response
+from flask import Blueprint, jsonify, request, render_template, session, redirect, url_for, flash, Response
 from functools import wraps
 from logs import LogManager
 log = LogManager.get_logger()
@@ -49,3 +49,25 @@ def select_all():
         log.error("An error occurred: %s", str(e))
         log.error("", traceback.format_exc())
         return Response("An error occurred: %s" % str(e), mimetype='application/json')
+    
+
+@old_conversations_bp.route("/select_all_pages", methods=['GET'])
+@requires_roles('admin', 'super admin', 'user')
+def select_all_pages():
+    try:
+        page = request.args.get('page', default=1, type=int)
+        per_page = request.args.get('per_page', default=100, type=int)
+        list = OldConversationsDatabaseManager.select_all_pages(page=page, per_page=per_page)
+        json_list = [{'id': item['id'], 'file_name': item['file_name'], 'strategy': item['strategy'], 
+                      'inbound_time': item['inbound_time'], 'inbound_message': item['inbound_message'], 
+                      'outbound_time': item['outbound_time'], 'outbound_message': item['outbound_message']} for item in list]
+        return Response(json.dumps(json_list), mimetype='application/json')
+    except Exception as e:
+        log.error("An error occurred: %s", str(e))
+        return Response("An error occurred: %s" % str(e), mimetype='application/json')
+
+@old_conversations_bp.route('/get_conversation_count')
+@requires_roles('admin', 'super admin', 'user')
+def get_conversation_count():
+    count = OldConversationsDatabaseManager.get_conversation_count()
+    return jsonify({'count': count}), 200
