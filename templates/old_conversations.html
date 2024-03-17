@@ -37,7 +37,7 @@
         <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-            <h5 class="modal-title" id="oldConversationsModalLabel">oldConversation Details</h5>
+            <h5 class="modal-title" id="oldConversationsModalLabel">Conversation Details</h5>
             <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
@@ -84,13 +84,10 @@ function loadTableData(page = 1, endpoint = `/select_all_pages`) {
                     // Add click event listener to the row
                     row.addEventListener('click', () => {
                         document.querySelector('#oldConversationsModal .modal-body').innerHTML = `
-                            <p><strong style="text-decoration: underline;">ID:</strong><br> ${conversation.id}</p>
-                            <p><strong style="text-decoration: underline;">File name:</strong><br> ${conversation.file_name}</p>
-                            <p><strong style="text-decoration: underline;">Strategy:</strong><br> ${conversation.strategy}</p>
-                            <p><strong style="text-decoration: underline;">Inbound time:</strong><br> ${conversation.inbound_time}</p>
-                            <p><strong style="text-decoration: underline;">Inbound message:</strong><br> ${conversation.inbound_message}</p>
-                            <p><strong style="text-decoration: underline;">Outbound time:</strong><br> ${conversation.outbound_time}</p>
-                            <p><strong style="text-decoration: underline;">Outbound message:</strong><br> ${conversation.outbound_message}</p>
+                            <p><strong style="text-decoration: underline;">ID:</strong> ${conversation.id}</p>
+                            <p><strong style="text-decoration: underline;">File name:</strong> ${conversation.file_name} --- <strong style="text-decoration: underline;">Strategy:</strong> ${conversation.strategy}</p>
+                            <p><strong style="text-decoration: underline;">Inbound message: (${conversation.inbound_time}) </strong><br> ${conversation.inbound_message}</p>
+                            <p><strong style="text-decoration: underline;">Outbound message: (${conversation.outbound_time}) </strong><br> ${conversation.outbound_message}</p>
                         `;
                         $('#oldConversationsModal').modal('show');
                     });

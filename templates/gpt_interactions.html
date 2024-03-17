@@ -38,7 +38,7 @@
                 <th>Top P</th>
                 <th>Frequency penalty</th>
                 <th>Presence penalty</th>
-                <th>Submission datetime</th>
+                <th>Datetime</th>
                 <th>By username</th>
             </tr>
         </thead>
@@ -91,7 +91,6 @@ function loadGPTsPages(page = 1, endpoint = `/select_all_gpt_interactions_pages`
             const gptsTableBody = document.getElementById('gpts-table').querySelector('tbody');
             gptsTableBody.innerHTML = '';
             if (gpts.length === 0) {
-                // If no GPTs are returned, display a message
                 const noDataRow = gptsTableBody.insertRow();
                 noDataRow.innerHTML = `<td colspan="13" class="text-center">No data available for this filter.</td>`;
             } else {
@@ -112,22 +111,22 @@ function loadGPTsPages(page = 1, endpoint = `/select_all_gpt_interactions_pages`
                     <td>${gpt.submission_datetime.substring(5, 16)}</td>
                     <td>${gpt.username ? gpt.username.substring(0, 10) + '...' : 'system'}</td>
                     `;
-                    // Add click event listener to the row
                     row.addEventListener('click', () => {
                         document.querySelector('#gptModal .modal-body').innerHTML = `
-                            <p><strong style="text-decoration: underline;">ID:</strong><br> ${gpt.id}</p>
+                            <p><strong style="text-decoration: underline;">ID:</strong> ${gpt.id}</p>
+                            <p><strong style="text-decoration: underline;">Model:</strong> ${gpt.model} (${gpt.submission_datetime})</p>
+                            <p><strong style="text-decoration: underline;">Instructions:</strong><br> ${gpt.instructions}</p>
                             <p><strong style="text-decoration: underline;">Prompt:</strong><br> ${gpt.prompt}</p>
                             <p><strong style="text-decoration: underline;">Generated Text:</strong><br> ${gpt.generated_text}</p>
-                            <p><strong style="text-decoration: underline;">Instructions:</strong><br> ${gpt.instructions}</p>
-                            <p><strong style="text-decoration: underline;">Model:</strong><br> ${gpt.model}</p>
-                            <p><strong style="text-decoration: underline;">Temperature:</strong><br> ${gpt.temperature}</p>
-                            <p><strong style="text-decoration: underline;">Max Length:</strong><br> ${gpt.max_length}</p>
-                            <p><strong style="text-decoration: underline;">Stop Sequences:</strong><br> ${gpt.stop_sequences}</p>
-                            <p><strong style="text-decoration: underline;">Top P:</strong><br> ${gpt.top_p}</p>
-                            <p><strong style="text-decoration: underline;">Frequency Penalty:</strong><br> ${gpt.frequency_penalty}</p>
-                            <p><strong style="text-decoration: underline;">Presence Penalty:</strong><br> ${gpt.presence_penalty}</p>
-                            <p><strong style="text-decoration: underline;">Submission Datetime:</strong><br> ${gpt.submission_datetime}</p>
-                            <p><strong style="text-decoration: underline;">By Username:</strong><br> ${gpt.username ? gpt.username : 'system'}</p>
+                            <p><br>------------<br></p>
+                            <p><strong style="text-decoration: underline;">Temperature:</strong> ${gpt.temperature}
+                                --- <strong style="text-decoration: underline;">Max Length:</strong> ${gpt.max_length}
+                                --- <strong style="text-decoration: underline;">Top P:</strong> ${gpt.top_p}
+                                --- <strong style="text-decoration: underline;">Frequency Penalty:</strong> ${gpt.frequency_penalty}
+                                --- <strong style="text-decoration: underline;">Presence Penalty:</strong> ${gpt.presence_penalty}</p>
+                            </p>
+                            <p><strong style="text-decoration: underline;">Stop Sequences:</strong> ${gpt.stop_sequences ? gpt.stop_sequences : ''}</p>
+                            <p><strong style="text-decoration: underline;">By username:</strong> ${gpt.username ? gpt.username : 'system'}</p>
                         `;
                         $('#gptModal').modal('show');
                     });

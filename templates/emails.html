@@ -163,43 +163,48 @@ function loadInboxPages(page = 1, endpoint = `/get_all_emails_pages`) {
         .then(emails => {
             const emailsTableBody = document.getElementById('emails-table').querySelector('tbody');
             emailsTableBody.innerHTML = '';
-            emails.forEach(email => {
-                const row = emailsTableBody.insertRow();
-                row.innerHTML = `
-                    <td>${email.id}</td>
-                    <td>${email.from_email.substring(0, 10)}...</td>
-                    <td>${email.to_email.substring(0, 10)}...</td>
-                    <td>${email.subject.substring(0, 10)}...</td>
-                    <td>${email.body.substring(0, 10)}...</td>
-                    <td>${email.date.substring(0, 10)}</td>
-                    <td>${email.time}</td>
-                    <td>${Boolean(Number(email.is_inbound)) ? 'In' : '---'}</td>
-                    <td>${Boolean(Number(email.is_outbound)) ? 'Out' : '---'}</td>
-                    <td>${Boolean(Number(email.is_archived)) ? 'Archived' : '---'}</td>
-                    <td>${Boolean(Number(email.is_scammer)) ? 'Scammer' : '---'}</td>
-                    <td>${Boolean(Number(email.is_handled)) ? 'Handled' : '---'}</td>
-                    <td>${Boolean(Number(email.is_queued)) ? 'Queued' : '---'}</td>
-                `;
-                row.addEventListener('click', () => {
-                    document.querySelector('#emailModal .modal-body').innerHTML = `
-                        <p><strong style="text-decoration: underline;">ID:</strong> ${email.id}</p>
-                        <p><strong style="text-decoration: underline;">From:</strong> ${email.from_email} <strong style="text-decoration: underline;">   To:</strong> ${email.to_email}</p>
-                        <p><strong style="text-decoration: underline;">Status:</strong>
-                            ${Boolean(Number(email.is_inbound)) ? 'Inbound' : ''}
-                            ${Boolean(Number(email.is_outbound)) ? 'Outbound' : ''}
-                            ${Boolean(Number(email.is_archived)) ? 'Archived' : ''}
-                            ${Boolean(Number(email.is_scammer)) ? 'Scammer' : ''}
-                            ${Boolean(Number(email.is_handled)) ? 'Handled' : ''}
-                            ${Boolean(Number(email.is_queued)) ? 'Queued' : ''}
-                        </p>
-                        <p><strong style="text-decoration: underline;">Datetime:</strong> ${email.date} <strong style="text-decoration: underline;">Time:</strong> ${email.time}</p>
-                        <p><strong style="text-decoration: underline;">Subject:</strong> ${email.subject}</p>
-                        <p><strong style="text-decoration: underline;">Body:</strong><br> ${email.body}</p>
-                        
+            if (emails.length === 0) {
+                const noDataRow = emailsTableBody.insertRow();
+                noDataRow.innerHTML = `<td colspan="13" class="text-center">No data available for this filter.</td>`;
+            } else {
+                emails.forEach(email => {
+                    const row = emailsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${email.id}</td>
+                        <td>${email.from_email.substring(0, 10)}...</td>
+                        <td>${email.to_email.substring(0, 10)}...</td>
+                        <td>${email.subject.substring(0, 10)}...</td>
+                        <td>${email.body.substring(0, 10)}...</td>
+                        <td>${email.date.substring(0, 10)}</td>
+                        <td>${email.time}</td>
+                        <td>${Boolean(Number(email.is_inbound)) ? 'In' : '---'}</td>
+                        <td>${Boolean(Number(email.is_outbound)) ? 'Out' : '---'}</td>
+                        <td>${Boolean(Number(email.is_archived)) ? 'Archived' : '---'}</td>
+                        <td>${Boolean(Number(email.is_scammer)) ? 'Scammer' : '---'}</td>
+                        <td>${Boolean(Number(email.is_handled)) ? 'Handled' : '---'}</td>
+                        <td>${Boolean(Number(email.is_queued)) ? 'Queued' : '---'}</td>
                     `;
-                    $('#emailModal').modal('show');
+                    row.addEventListener('click', () => {
+                        document.querySelector('#emailModal .modal-body').innerHTML = `
+                            <p><strong style="text-decoration: underline;">ID:</strong> ${email.id}</p>
+                            <p><strong style="text-decoration: underline;">From:</strong> ${email.from_email} <strong style="text-decoration: underline;">   To:</strong> ${email.to_email}</p>
+                            <p><strong style="text-decoration: underline;">Status:</strong>
+                                ${Boolean(Number(email.is_inbound)) ? 'Inbound' : ''}
+                                ${Boolean(Number(email.is_outbound)) ? 'Outbound' : ''}
+                                ${Boolean(Number(email.is_archived)) ? 'Archived' : ''}
+                                ${Boolean(Number(email.is_scammer)) ? 'Scammer' : ''}
+                                ${Boolean(Number(email.is_handled)) ? 'Handled' : ''}
+                                ${Boolean(Number(email.is_queued)) ? 'Queued' : ''}
+                            </p>
+                            <p><strong style="text-decoration: underline;">Date:</strong> ${email.date} <strong style="text-decoration: underline;">Time:</strong> ${email.time}</p>
+                            <p><strong style="text-decoration: underline;">Subject:</strong> ${email.subject}</p>
+                            <p><strong style="text-decoration: underline;">Body:</strong><br> ${email.body}</p>
+                            
+                        `;
+                        $('#emailModal').modal('show');
+                    });
                 });
-            });
+            }
             if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
         })
         .catch(error => {

@@ -142,8 +142,11 @@ def logout():
 @requires_roles('admin', 'super admin')
 def update_role():
     try:
-        user_id = request.form.get('update_role')
-        role_id = request.form.get(f'role_{user_id}')
+        user_id = request.form.get('user_id')
+        # user_id = request.form.get('update_role')
+        # role_id = request.form.get(f'role_{user_id}')
+        # Get role_id from the form:
+        role_id = request.form.get('role_id')
         user = User.query.get(user_id)
         role = Role.query.get(role_id)
         if user and role:
@@ -153,6 +156,7 @@ def update_role():
             flash('Role updated successfully!', 'success')
         else:
             flash('User or role not found.', 'danger')
+            log.error(f"User or role not found. User ID: {user_id}, Role ID: {role_id}")
         return redirect(url_for('users.users'))
     except Exception as e:
         db_models.session.rollback()
@@ -223,5 +227,23 @@ def clear_password():
             flash('User not found.', 'danger')
         return redirect(url_for('users.users'))
     except Exception as e:
-        log.error("An error occurred when changing password: %s", str(e))
-        log.error("", traceback.format_exc())
+        log.error(f"An error occurred when changing password: {str(e)}. {traceback.format_exc()}")
+
+@users_bp.route('/delete_user', methods=['POST'])
+@requires_roles('super admin')
+def delete_user():
+    try:
+        user_id = request.form.get('user_id')
+        user = User.query.get(user_id)
+        if user:
+            db_models.session.delete(user)
+            db_models.session.commit()
+            flash('User deleted successfully!', 'success')
+        else:
+            flash('User not found.', 'danger')
+        return redirect(url_for('users.users'))
+    except Exception as e:
+        db_models.session.rollback()
+        flash('An error occurred while deleting the user.', 'danger')
+        log.error(f"An error occurred when deleting user: {str(e)}. {traceback.format_exc()}")
+        return redirect(url_for('users.users'))

@@ -37,15 +37,34 @@ def datetime_converter(o):
     if isinstance(o, datetime):
         return o.__str__()
     
+# @settings_bp.route('/settings')
+# @requires_roles('super admin', 'admin')
+# def index():
+#     user_roles = []
+#     if 'username' in session:
+#         user = User.query.filter_by(username=session['username']).first()
+#         if user:
+#             user_roles = [role.name for role in user.roles]
+#     return render_template('settings.html', user_roles=user_roles)
+    
 @settings_bp.route('/settings')
 @requires_roles('super admin', 'admin')
 def index():
     user_roles = []
+    cron_state = 'unknown'  # Default value
+    try:
+        cron_state_rows = SettingsDatabaseManager.get_cron_state()
+        if cron_state_rows:
+            cron_state = cron_state_rows[0][0]  # Assuming there's only one settings row
+    except Exception as e:
+        log.error("Failed to fetch cron_state: %s", str(e))
+
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
             user_roles = [role.name for role in user.roles]
-    return render_template('settings.html', user_roles=user_roles)
+    return render_template('settings.html', user_roles=user_roles, cron_state=cron_state)
+
 
 @settings_bp.route('/get_settings')
 @requires_roles('super admin', 'admin')
