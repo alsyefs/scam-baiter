@@ -1,3 +1,6 @@
+# run: python app.py
+# run: ngrok as: ngrok http --domain=DOMAIN_NAME 10234
+
 from secret import ( 
     OPENAI_API_KEY, MAILGUN_API_KEY, MAILGUN_DOMAIN_NAME,
     FLASK_SECRET_KEY, DEFAULT_SUPER_ADMIN_USERNAME,
@@ -5,7 +8,7 @@ from secret import (
     TWILIO_PHONE_NUMBERS, DEFAULT_USER_USERNAME,
     DEFAULT_USER_PASSWORD, DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD,
     MAILGUN_TARGET_EMAIL_TEST, ELEVENLABS_API_KEY, DOMAIN_NAME,
-    VONAGE_API_KEY, VONAGE_API_SECRET, ASSEMBLYAI_API_KEY
+    ASSEMBLYAI_API_KEY
 )
 # from models.tts.phone_call_script_data import (PROMPT_KEYWORDS, RESPONSE_SENTENCES)
 import logging
@@ -19,7 +22,7 @@ CRON_JOB_PATH = os.path.join(BASE_DIR, "cron.py")
 
 LOGGING_LEVEL = logging.DEBUG
 logging.DEBUG
-DEBUGGING_LOGS_TABLE_NAME = "logs_debugging"
+DEBUG_LOGS_TABLE_NAME = "logs_debugging"
 INFO_LOGS_TABLE_NAME = "logs_info"
 WARNING_LOGS_TABLE_NAME = "logs_warning"
 ERROR_LOGS_TABLE_NAME = "logs_error"
@@ -44,16 +47,16 @@ DEFAULT_USER_PASSWORD = DEFAULT_USER_PASSWORD
 # MAIL handling
 MAX_EMAILS_TO_HANDLE = 20  # number of replies per cron run
 EMAILS_DIRECTORY = os.path.join(BASE_DIR, "emails")  # root directory for all emails
-MAIL_SAVE_DIR = os.path.join(BASE_DIR, "emails", "queued")  # crawled and received emails
+MAIL_QUEUED_DIR = os.path.join(BASE_DIR, "emails", "queued")  # crawled and received emails
 MAIL_ARCHIVE_DIR = os.path.join(BASE_DIR, "emails", "archive")  # archive
 MAIL_HANDLED_DIR = os.path.join(BASE_DIR, "emails", "handled")  # emails replied to
-ADDR_SOL_PATH = os.path.join(BASE_DIR, "emails", "record.json")  # stores email addresses and names and strategies used
+SCAMMERS_EMAILS_FILE_PATH = os.path.join(BASE_DIR, "emails", "record.json")  # stores email addresses and names and strategies used
 INBOX_MAIL = os.path.join(BASE_DIR, "emails", "inbox")  # emails received
 SENT_MAIL = os.path.join(BASE_DIR, "emails", "sent")  # emails sent
 READ_INBOX = os.path.join(BASE_DIR, "emails", "read")  # emails read
 UNREAD_INBOX = os.path.join(BASE_DIR, "emails", "unread")  # new emails
 EMAIL_TEMPLATE = os.path.join(BASE_DIR, "emailing_service", "template.html")  # email template
-MAILGUN_TARGET_EMAIL_TEST = MAILGUN_TARGET_EMAIL_TEST # Email for testing to be removed in production.
+MAILGUN_TARGET_EMAIL_TEST = MAILGUN_TARGET_EMAIL_TEST  # Email for testing to be removed in production.
 
 
 EMAIL_ARCHIVED_CLEANED_DIR = os.path.join(BASE_DIR, "emails", "archive_cleaned")
@@ -76,34 +79,27 @@ SPEAKER_WAV = os.path.join(BASE_DIR, 'data', 'audio_files', 'clone_from', "us_ma
 
 # OpenAI GPT
 MAX_TOKENS = 4096  # max tokens for GPT-4
-GPT_MODEL = "gpt-3.5-turbo"  # 4,096 tokens
+# GPT_MODEL = "gpt-3.5-turbo"  # 4,096 tokens
 # GPT_MODEL = "gpt-3.5-turbo-1106"  # 4,096 tokens
-# GPT_MODEL = "gpt-4"  # 8,192 tokens
+GPT_MODEL = "gpt-4"  # 8,192 tokens
 ## GPT_MODEL = "gpt-4.0-turbo"  # 8,192 tokens # This does not work!
 # GPT_MODEL = "gpt-4-1106-preview"  # 128,000 tokens
 # GPT_MODEL = "gpt-4-vision-preview"  # 128,000 tokens
 OPENAI_API_KEY = OPENAI_API_KEY
-GPT_CHAT_1_INSTRUCTIONS = """You are a dull person and gullible person who is easy to persuade.
-You want to share information. Do not call them a scam. Keep conversation going.
-Ask follow-up questions. Do not give any personal information. Greet them in the start."""
-GPT_CHAT_2_INSTRUCTIONS = """You are good at pattern following.
-You are a person and not a language model. Do not call them a scam."""
-GPT_CHAT_3_INSTRUCTIONS = """You are a dull person and gullible person who is easy to persuade. You need help with your laptop from Technical Support.
-You want to share information. Do not call them a scam. Keep conversation going. You ask for assistance for your slow laptop.
-Ask follow-up questions. Do not give any personal information. Reply with short sentences. Do not offer help.
-You are a person and not a language model. You need help from Technical Support. You need help, you do not offer help."""
+GPT_CHAT_1_INSTRUCTIONS = """You are a dull person and a gullible person who is easy to persuade. You want to share information. Do not call them a scam. Keep the conversation going. Ask follow-up questions. Do not give any personal information. Greet them at the start."""
+GPT_CHAT_2_INSTRUCTIONS = """You are a dull person and a gullible person who is easy to persuade. You want to share information. Do not call them a scam. Keep the conversation going. Ask follow-up questions. Do not give any personal information. Greet them at the start."""
+GPT_CHAT_3_INSTRUCTIONS = """You are a 73-year-old lady named Gertrude. You have minimal knowledge of using social media, but you are comfortable enough with Gmail to respond to your son in Australia and grandchildren occasionally. You are wealthy. You are not educated and now retired. Your partner passed 5 years ago. Be polite and kind. You are unaware of scams and what they look like. You must never reveal you are only role-playing. Try to build a meaningful, reciprocal relationship with the sender and treat it like a friend. Be patient and keep the conversation going, you are open to opportunities and willing to take a risk, but do not share your address or phone number. Keep your reply short, under 150 words."""
+GPT_CHAT_4_INSTRUCTIONS = """You are a 73-year-old lady named Gertrude. You have minimal knowledge of using social media, but you are comfortable enough with Gmail to respond to your son in Australia and grandchildren occasionally. You are wealthy. You are not educated and now retired. Your partner passed 5 years ago. Be polite and kind. You are unaware of scams and what they look like. You must never reveal you are only role-playing. Try to build a meaningful, reciprocal relationship with the sender and treat it like a friend. Be patient and keep the conversation going, you are open to opportunities and willing to take a risk, but do not share your address or phone number."""
+GPT_CHAT_5_INSTRUCTIONS = """You are a 73-year-old man named Frank. You have minimal knowledge of using social media, but you are comfortable enough with Gmail to respond to your son in Australia and grandchildren occasionally. You are wealthy. You are not educated and now retired. Your partner passed 5 years ago. Be polite and kind. You are unaware of scams and what they look like. You must never reveal you are only role-playing. Try to build a meaningful, reciprocal relationship with the sender and treat it like a friend. Be patient and keep the conversation going, you are open to opportunities and willing to take a risk, but do not share your address or phone number. Keep your reply short, under 150 words."""
+GPT_CHAT_6_INSTRUCTIONS = """You are a 73-year-old man named Frank. You have minimal knowledge of using social media, but you are comfortable enough with Gmail to respond to your son in Australia and grandchildren occasionally. You are wealthy. You are not educated and now retired. Your partner passed 5 years ago. Be polite and kind. You are unaware of scams and what they look like. You must never reveal you are only role-playing. Try to build a meaningful, reciprocal relationship with the sender and treat it like a friend. Be patient and keep the conversation going, you are open to opportunities and willing to take a risk, but do not share your address or phone number."""
+
+GPT_CHAT_TTS_INSTRUCTIONS = """You are a dull person and gullible person who is easy to persuade. You need help with your laptop from Technical Support. You want to share information. Do not call them a scam. Keep conversation going. You ask for assistance for your slow laptop. Ask follow-up questions. Do not give any personal information. Reply with short sentences. Do not offer help. You are a person and not a language model. You need help from Technical Support. You need help, you do not offer help."""
 GPT_STOP_SEQUENCES = ["I am an AI", "I'm an AI", "AI", "As an artificial"]
 GPT_PRESENCE_PENALTY = 0.5
 GPT_FREQUENCY_PENALTY = 0.5
 
 # MODEL handling
 MODEL_HISTORY_PATH = os.path.join(BASE_DIR, "models", "history.json")  # list of responders and times used
-CLASSIFIER_PATH = os.path.join(BASE_DIR, "models", "classifier", "final-model.pt")  # classifier model (not used).
-FILENAME1 = os.path.join(BASE_DIR, "data", "eliza_dane_green_days.json")
-FILENAME2 = os.path.join(BASE_DIR, "data", "tushie-blessing.json")
-FILENAME3 = os.path.join(BASE_DIR, "data", "noogie_california_dreamin.json")
-TEMPLATES_DIR = os.path.join(BASE_DIR, "responder", "templates")
-CONTENT = "I am writing to inform you that your compensation/winning payment of $10 was approved today by the Board and Directors of United Nation Committee on Rewards and Compensation. You are therefore advised to reconfirm your details to enable the financial department release your payment to you without any delay. Thus, reconfirm the following: 1. Your Full Name: 2. Your residential address: 3. Your direct phone number: We look forward to your prompt response.  Thank you. George McConnell, citibankmanagingd@gmail.com Director of Payments, United Nations Ministry of Foreign Affair"
 OLD_COVERSATIONS_CSV = os.path.join(BASE_DIR, "data", "old_conversations.csv")
 
 # Crawling handling
@@ -133,10 +129,40 @@ TWILIO_PARTIAL_RESULT_CALLBACK_URL = f"https://{DOMAIN_NAME}/partial_result_call
 ASSEMBLYAI_API_KEY = ASSEMBLYAI_API_KEY
 FINAL_TRANSCRIPTIONS = []  # The global variable representing the final transcriptions of the phone call to be used in a web socket.
 
-# Vonage (For making phone calls as an alternative to Twilio)
-VONAGE_API_KEY = VONAGE_API_KEY
-VONAGE_API_SECRET = VONAGE_API_SECRET
-
 # ElevenLabs (For text-to-speech)
 ELEVENLABS_API_KEY = ELEVENLABS_API_KEY
 ELEVENLABS_PREMADE_VOICES = os.path.join(BASE_DIR, "elevenlabs", "elevenlabs_voices.json")
+
+# Create a secret.py file in the same directory as this file and add the following variables:
+
+# OpenAI GPT to connect to OpenAI API:
+# OPENAI_API_KEY = ""
+
+# # Domain:
+# DOMAIN_NAME = ""  # The domain name for the web application.
+
+# # MAILGUN for email sending and receiving:
+# MAILGUN_API_KEY = ""
+# MAILGUN_DOMAIN_NAME = ""  # This is the domain name setup for Mailgun which can be similar to the web application domain name.
+# MAILGUN_TARGET_EMAIL_TEST = ""  # Email for testing when sending emails to be removed in production.
+
+# # Twilio for phone calls, if not needed, leave the variables empty:
+# TWILIO_ACCOUNT_SID = ""
+# TWILIO_AUTH_TOKEN = ""
+# TWILIO_PHONE_NUMBERS = ['+441111222333', '+15550004444']
+
+# # Assembly AI for voice transcription, if not needed, leave the variables empty:
+# ASSEMBLYAI_API_KEY = ""
+
+# # Web application variables:
+# # FLASK_SECRET_KEY can be generated using os.urandom(24) or using any random string generator.
+# FLASK_SECRET_KEY = ""
+# DEFAULT_SUPER_ADMIN_USERNAME = ""
+# DEFAULT_SUPER_ADMIN_PASSWORD = ""
+# DEFAULT_ADMIN_USERNAME = ""
+# DEFAULT_ADMIN_PASSWORD = ""
+# DEFAULT_USER_USERNAME = ""
+# DEFAULT_USER_PASSWORD = ""
+
+# # ElevenLabs for text-to-speech, if not needed, leave the variables empty:
+# ELEVENLABS_API_KEY = ""

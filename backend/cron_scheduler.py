@@ -22,8 +22,7 @@ def check_and_run_cron_jobs():
 def run_cron_jobs():
     try:
         log.info("Running a cron job...")
-        result = subprocess.run(['python', CRON_JOB_PATH], check=True, text=True, capture_output=True)
-        print(f"{result.stdout}")
+        subprocess.run(['python', CRON_JOB_PATH], check=True, text=True)
     except Exception as e:
         log.error(f"An error occurred while running cron job: {e}. Traceback: {traceback.format_exc()}")
 

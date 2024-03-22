@@ -7,15 +7,15 @@ from requests import session
 from langdetect import detect, LangDetectException
 from collections import namedtuple
 import re
-from globals import MAIL_SAVE_DIR, CRAWLER_PROG_DIR, MAX_PAGE_SS
+from globals import MAIL_QUEUED_DIR, CRAWLER_PROG_DIR, MAX_PAGE_SS
 URL = "https://scammer.info/c/scams/5"
 BASE_URL = "https://scammer.info"
 EMAIL_RE = re.compile(r"^\w+?@\w+?\.\w+$")  # This regex might need to be updated.
 
 s = session()
 TopicInfo = namedtuple("TopicInfo", ["scam_addr", "url"])
-if not os.path.exists(MAIL_SAVE_DIR):
-    os.makedirs(MAIL_SAVE_DIR)
+if not os.path.exists(MAIL_QUEUED_DIR):
+    os.makedirs(MAIL_QUEUED_DIR)
 if not os.path.exists(CRAWLER_PROG_DIR):
     os.makedirs(CRAWLER_PROG_DIR)
 PROG_FILE = CRAWLER_PROG_DIR + "/ss.his"
@@ -88,7 +88,7 @@ def fetch():
         title = content.split("\n", maxsplit=1)[0][:30]
         info = {"title": title, "content": content, "url": topic_info.url, "from": topic_info.scam_addr.lower()}
         file_name = topic_info.url.rsplit("/", 1)[1].split("&")[1].replace("t=", "ss_")
-        output_path = f"{MAIL_SAVE_DIR}/{file_name}.json"
+        output_path = f"{MAIL_QUEUED_DIR}/{file_name}.json"
         with open(output_path, "w", encoding="utf8") as f:
             json.dump(info, f, indent=4)
 if __name__ == '__main__':

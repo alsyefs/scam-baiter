@@ -1,7 +1,7 @@
 import logging
 import os
 from globals import (
-    LOGGING_LEVEL, DB_PATH, DEBUGGING_LOGS_TABLE_NAME, INFO_LOGS_TABLE_NAME, 
+    LOGGING_LEVEL, DB_PATH, DEBUG_LOGS_TABLE_NAME, INFO_LOGS_TABLE_NAME, 
     WARNING_LOGS_TABLE_NAME, ERROR_LOGS_TABLE_NAME, CRITICAL_LOGS_TABLE_NAME, 
     NOTSET_LOGS_TABLE_NAME, INFO_LOGS_TEXT_FILE_PATH, WARNING_LOGS_TEXT_FILE_PATH, 
     ERROR_LOGS_TEXT_FILE_PATH, CRITICAL_LOGS_TEXT_FILE_PATH, NOTSET_LOGS_TEXT_FILE_PATH, 
@@ -33,7 +33,7 @@ class LogManager:
     def _setup_db_handlers(formatter):
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         level_to_table_name = {
-            logging.DEBUG: DEBUGGING_LOGS_TABLE_NAME,
+            logging.DEBUG: DEBUG_LOGS_TABLE_NAME,
             logging.INFO: INFO_LOGS_TABLE_NAME,
             logging.WARNING: WARNING_LOGS_TABLE_NAME,
             logging.ERROR: ERROR_LOGS_TABLE_NAME,

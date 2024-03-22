@@ -6,7 +6,7 @@ import traceback
 from backend.database.models import User
 from backend.database import logs_db_manager as logs
 from globals import (
-    DEBUGGING_LOGS_TABLE_NAME, INFO_LOGS_TABLE_NAME, WARNING_LOGS_TABLE_NAME, 
+    DEBUG_LOGS_TABLE_NAME, INFO_LOGS_TABLE_NAME, WARNING_LOGS_TABLE_NAME, 
     ERROR_LOGS_TABLE_NAME, CRITICAL_LOGS_TABLE_NAME, NOTSET_LOGS_TABLE_NAME
 )
 import json
@@ -50,7 +50,7 @@ def get_logs():
         log_level = request.args.get('logLevel', None)
         if log_level:
             table_mapping = {
-                'DEBUG': DEBUGGING_LOGS_TABLE_NAME,
+                'DEBUG': DEBUG_LOGS_TABLE_NAME,
                 'INFO': INFO_LOGS_TABLE_NAME,
                 'WARNING': WARNING_LOGS_TABLE_NAME,
                 'ERROR': ERROR_LOGS_TABLE_NAME,
@@ -79,7 +79,7 @@ def get_logs_pages():
         log_level = request.args.get('logLevel', None)
         page = request.args.get('page', default=1, type=int)
         table_mapping = {
-            'DEBUG': DEBUGGING_LOGS_TABLE_NAME,
+            'DEBUG': DEBUG_LOGS_TABLE_NAME,
             'INFO': INFO_LOGS_TABLE_NAME,
             'WARNING': WARNING_LOGS_TABLE_NAME,
             'ERROR': ERROR_LOGS_TABLE_NAME,
@@ -105,7 +105,7 @@ def get_logs_count():
         log_level = request.args.get('logLevel', None)
         if log_level:
             table_mapping = {
-                'DEBUG': DEBUGGING_LOGS_TABLE_NAME,
+                'DEBUG': DEBUG_LOGS_TABLE_NAME,
                 'INFO': INFO_LOGS_TABLE_NAME,
                 'WARNING': WARNING_LOGS_TABLE_NAME,
                 'ERROR': ERROR_LOGS_TABLE_NAME,

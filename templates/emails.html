@@ -222,10 +222,10 @@ function applyFilters() {
         endpoint = '/get_outbound_emails_pages';
     } else if (selectedFilter === 'scammer') {
         endpoint = '/get_scammer_emails_pages';
-    } else if (selectedFilter === 'archived_pages') {
-        endpoint = '/get_archived_emails';
-    } else if (selectedFilter === 'handled_pages') {
-        endpoint = '/get_handled_emails';
+    } else if (selectedFilter === 'archived') {
+        endpoint = '/get_archived_emails_pages';
+    } else if (selectedFilter === 'handled') {
+        endpoint = '/get_handled_emails_pages';
     } else if (selectedFilter === 'queued') {
         endpoint = '/get_queued_emails_pages';
     }

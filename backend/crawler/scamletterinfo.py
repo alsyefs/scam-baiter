@@ -7,14 +7,14 @@ from requests import session
 from langdetect import detect, LangDetectException
 import re
 
-from globals import MAIL_SAVE_DIR, CRAWLER_PROG_DIR, MAX_PAGE_SL
+from globals import MAIL_QUEUED_DIR, CRAWLER_PROG_DIR, MAX_PAGE_SL
 
 URL = "http://scamletters.info/category/scam/page/__page__"
 EMAIL_RE = re.compile(r"\w+?@\w+?\.\w+")
 s = session()
 
-if not os.path.exists(MAIL_SAVE_DIR):
-    os.makedirs(MAIL_SAVE_DIR)
+if not os.path.exists(MAIL_QUEUED_DIR):
+    os.makedirs(MAIL_QUEUED_DIR)
 
 if not os.path.exists(CRAWLER_PROG_DIR):
     os.makedirs(CRAWLER_PROG_DIR)
@@ -73,7 +73,7 @@ def get_info_list(page=1):
 def get_body(info):
     url = info["url"]
     file_name = url.rsplit("/", 2)[1]
-    output_path = f"{MAIL_SAVE_DIR}/{file_name}.json"
+    output_path = f"{MAIL_QUEUED_DIR}/{file_name}.json"
     if os.path.exists(output_path):
         return
 

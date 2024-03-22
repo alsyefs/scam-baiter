@@ -2,11 +2,11 @@ import json
 import os
 from collections import namedtuple, defaultdict
 from globals import MODEL_HISTORY_PATH
-from .replier import Replier, TemplateReplier, ChatReplier1, ChatReplier2
+from .replier import Replier, ChatReplier1, ChatReplier2, ChatReplier3, ChatReplier4, ChatReplier5, ChatReplier6
 from logs import LogManager
 log = LogManager.get_logger()
 
-replier_list = [ChatReplier1(), ChatReplier2()]
+replier_list = [ChatReplier1(), ChatReplier2(), ChatReplier3(), ChatReplier4(), ChatReplier5(), ChatReplier6()]
 ReplyResult = namedtuple("ReplyResult", ["name", "text"])
 
 if not os.path.exists(os.path.dirname(MODEL_HISTORY_PATH)):
@@ -48,8 +48,8 @@ def get_replier_randomly() -> Replier:
     return get_replier_by_name(res)
 
 
-def get_reply_random(mail_body) -> ReplyResult:
+def get_reply_random(mail_body, old_summary_context="") -> ReplyResult:
     r = get_replier_randomly()
-    text = r.get_reply(mail_body)
+    text = r.get_reply(mail_body, old_summary_context)
     res = ReplyResult(r.name, text)
     return res

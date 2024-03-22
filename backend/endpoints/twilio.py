@@ -12,7 +12,7 @@ from twilio.twiml.voice_response import VoiceResponse, Gather, Conversation, Sta
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from backend import twilio
-from backend.responder.Chatgpt_Replier import gen_text1, gen_text2, gen_text3, gen_text3_async
+from backend.responder.Chatgpt_Replier import gen_text_tts, gen_text_tts_async
 from database.sms_table import SmsDatabaseManager
 # from backend.elevenlabs.tts_ai import text_to_speech_mp3
 from backend.models.tts.tts_openai_model import tts_openai, tts_openai_audio
@@ -102,7 +102,7 @@ def incoming_sms():
                                       is_outbound=0,
                                       is_scammer=0)
         resp = MessagingResponse()
-        generated_response = gen_text3(incoming_message)
+        generated_response = gen_text_tts(incoming_message)
         log.info(f"Generated SMS response from:({request.values.get('To', None)}), to:({request.values.get('From', None)}), response message: ({generated_response}).")
         message = request.args.get('message', generated_response)
         SmsDatabaseManager.insert_sms(from_sms=request.values.get('To', None),
@@ -230,7 +230,7 @@ def handle_ongoing_call_synchronous():
         response.play('/tts_play_synchronous')
         log.info(f"Call from:({request.values.get('From', None)}), to:({request.values.get('To', None)}). Received voice input: ({received_voice_text_input}). Ending call with the command: (end call).")
     elif received_voice_text_input:
-        generated_response = gen_text3(received_voice_text_input)
+        generated_response = gen_text_tts(received_voice_text_input)
         # generated_response = generate_call_response(received_voice_text_input)
         time_to_generate_text_response = time.time() - start_time
         time_to_generate_text_response = f"{time_to_generate_text_response:.2f} seconds" if time_to_generate_text_response < 60 else f"{time_to_generate_text_response/60:.2f} minutes"
@@ -401,7 +401,7 @@ async def partial_result_callback():
         partial_transcription = request.form.get('UnstableSpeechResult', '') # call_sid = request.form.get('CallSid', '')
         if partial_transcription and len(partial_transcription.split()) >= 3:
             __received_voice_text_input = partial_transcription
-            __generated_voice_text_response = asyncio.run(gen_text3_async(__received_voice_text_input))
+            __generated_voice_text_response = asyncio.run(gen_text_tts_async(__received_voice_text_input))
             # __generated_voice_text_response = generate_call_response(__received_voice_text_input)
             print(f"prompt: ({__received_voice_text_input}), response: ({__generated_voice_text_response}).")
             completed_time = time.time() - start_time
@@ -409,7 +409,7 @@ async def partial_result_callback():
             print(f"ENDED /partial_result_callback. Call handling completed in ({completed_time}).")
             response.redirect(url_for('twilio.ongoing_call_asynchronous'))
         elif not partial_transcription:
-            __generated_voice_text_response = asyncio.run(gen_text3_async(__received_voice_text_input))
+            __generated_voice_text_response = asyncio.run(gen_text_tts_async(__received_voice_text_input))
             response.redirect(url_for('twilio.ongoing_call_asynchronous'))
         else:
             __received_voice_text_input = ""
@@ -434,8 +434,8 @@ async def partial_result_callback():
 #         if partial_transcription:
 #             __received_voice_text_input = partial_transcription
 #             if len(__received_voice_text_input.split()) > 3:
-#                 # __generated_voice_text_response = gen_text3(__received_voice_text_input)
-#                 __generated_voice_text_response = asyncio.run(gen_text3_async(__received_voice_text_input))
+#                 # __generated_voice_text_response = gen_text_tts(__received_voice_text_input)
+#                 __generated_voice_text_response = asyncio.run(gen_text_tts_async(__received_voice_text_input))
 #                 # __generated_voice_text_response = generate_call_response(__received_voice_text_input)
 #                 print(f"prompt length: ({len(__received_voice_text_input.split())}).")
 #                 print(f"prompt: ({__received_voice_text_input}), response: ({__generated_voice_text_response}).")
@@ -445,8 +445,8 @@ async def partial_result_callback():
 #                 # response.redirect('/partial_result_callback')
 #                 response.redirect(url_for('twilio.ongoing_call_asynchronous'))
 #         if not partial_transcription and __received_voice_text_input:
-#             # __generated_voice_text_response = gen_text3(__received_voice_text_input)
-#             __generated_voice_text_response = asyncio.run(gen_text3_async(__received_voice_text_input))
+#             # __generated_voice_text_response = gen_text_tts(__received_voice_text_input)
+#             __generated_voice_text_response = asyncio.run(gen_text_tts_async(__received_voice_text_input))
 #             # __generated_voice_text_response = generate_call_response(__received_voice_text_input)
 #             print(f"prompt: ({__received_voice_text_input}), response: ({__generated_voice_text_response}).")
 #             completed_time = time.time() - start_time
@@ -528,7 +528,7 @@ def realtime_call_socket(ws):
                     time_to_receive_text_input = time.time() - start_time
                     time_to_receive_text_input = f"{time_to_receive_text_input:.2f} seconds" if time_to_receive_text_input < 60 else f"{time_to_receive_text_input/60:.2f} minutes"
                     print(f"Transcribted prompt ({time_to_receive_text_input}): {FINAL_TRANSCRIPTIONS}")
-                    generated_response = gen_text3(FINAL_TRANSCRIPTIONS[-1])
+                    generated_response = gen_text_tts(FINAL_TRANSCRIPTIONS[-1])
                     time_to_generate_text_response = time.time() - start_time
                     print(f"Generated response ({time_to_generate_text_response}): {generated_response}")
                     FINAL_TRANSCRIPTIONS.clear()

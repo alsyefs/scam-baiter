@@ -7,9 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 from globals import (
-    BASE_DIR, MAIL_SAVE_DIR, MAIL_ARCHIVE_DIR, UNIQUE_EMAIL_QUEUED,
+    BASE_DIR, MAIL_QUEUED_DIR, MAIL_ARCHIVE_DIR, UNIQUE_EMAIL_QUEUED,
     UNIQUE_EMAIL_QUEUED_DUPLICATE, EMAIL_ARCHIVED_CLEANED_DIR,
-    EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR, ADDR_SOL_PATH,
+    EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR, SCAMMERS_EMAILS_FILE_PATH,
     EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_MOST_CONVERSATIONS,
     EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LONGEST_CONVERSATIONS,
     MAILGUN_DOMAIN_NAME, EMAIL_ARCHIVED_REPORT, EMAILS_REPORT_DIR,
@@ -22,7 +22,7 @@ CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1'          # new strategy name, uncompress em
 CHAT_2_STRATEGY_NAME = 'gpt-3.5-turbo-Chat2'  # new strategy name, uncompress emails_new_gpt.zip
 
 def get_sol_from_addr_sol_path(email_to, email_from):
-    with open(ADDR_SOL_PATH, 'r') as f:
+    with open(SCAMMERS_EMAILS_FILE_PATH, 'r') as f:
         addr_sol_data = json.load(f)
     chat_1 = CHAT_1_STRATEGY_NAME
     chat_2 = CHAT_2_STRATEGY_NAME
@@ -46,9 +46,9 @@ def check_duplicate_queued_emails(hide_emails=True):
     email_set = set()
     email_dup_set = set()
     email_count = 0
-    total_files_to_process = sum(1 for filename in os.listdir(MAIL_SAVE_DIR) if filename.endswith(".json"))
+    total_files_to_process = sum(1 for filename in os.listdir(MAIL_QUEUED_DIR) if filename.endswith(".json"))
     with tqdm(total=total_files_to_process) as progress_bar:
-        for filename in os.listdir(MAIL_SAVE_DIR):
+        for filename in os.listdir(MAIL_QUEUED_DIR):
             progress_bar.update(1)
             if filename.endswith(".json"):
                 file_path = os.path.join(BASE_DIR, "emails", "queued", filename)
@@ -520,7 +520,7 @@ def plot_chart_avg_conversations_per_thread(strategies):
 if __name__ == "__main__":
     print(f"Running...")
     hide_emails = HIDE_EMAILS
-    print(f"1. Checking duplicate emails in ({os.path.relpath(MAIL_SAVE_DIR, BASE_DIR)})...")
+    print(f"1. Checking duplicate emails in ({os.path.relpath(MAIL_QUEUED_DIR, BASE_DIR)})...")
     check_duplicate_queued_emails(hide_emails=hide_emails)
     print(f"2. Completed checking duplicate emails. Stored unique and duplicate emails in ({os.path.relpath(UNIQUE_EMAIL_QUEUED, BASE_DIR)}) and ({os.path.relpath(UNIQUE_EMAIL_QUEUED_DUPLICATE, BASE_DIR)}) respectively.")
     print(f"3. Reading files in ({os.path.relpath(MAIL_ARCHIVE_DIR, BASE_DIR)}) for cleaning and sorting conversations...")

@@ -13,9 +13,8 @@ log = LogManager.get_logger()
 from globals import (
     EMAILS_DIRECTORY, DB_PATH, LOGGING_LEVEL, CRAWLER_PROG_DIR,
     INFO_LOGS_TABLE_NAME, WARNING_LOGS_TABLE_NAME, ERROR_LOGS_TABLE_NAME,
-    CRITICAL_LOGS_TABLE_NAME, NOTSET_LOGS_TABLE_NAME,
-    ERROR_LOGS_TEXT_FILE_PATH, CRITICAL_LOGS_TEXT_FILE_PATH,
-    NOTSET_LOGS_TEXT_FILE_PATH, FLASK_SECRET_KEY,
+    CRITICAL_LOGS_TABLE_NAME, NOTSET_LOGS_TABLE_NAME, DEBUG_LOGS_TABLE_NAME,
+    FLASK_SECRET_KEY,
     DEFAULT_SUPER_ADMIN_USERNAME, DEFAULT_SUPER_ADMIN_PASSWORD,
     DEFAULT_ADMIN_USERNAME, DEFAULT_USER_USERNAME, DEFAULT_USER_PASSWORD,
     DEFAULT_ADMIN_PASSWORD, CRON_JOB_PATH, MAILGUN_DOMAIN_NAME,
@@ -24,7 +23,7 @@ from globals import (
 from werkzeug.security import generate_password_hash
 import shutil
 import subprocess
-from database import logs_db_manager, emails_db_manager, calls_db_manager, sms_db_manager, gpt_db_manager, settings_db_manager
+from database import logs_db_manager, emails_db_manager, calls_db_manager, sms_db_manager, gpt_db_manager, settings_db_manager, scammers_db_manager
 from backend.database.models import db_models
 from backend.database.users_table import UsersDatabaseManager
 from backend.database.roles_table import RolesDatabaseManager
@@ -45,7 +44,6 @@ from geventwebsocket.handler import WebSocketHandler
 
 app = Flask(__name__)
 socketio.init_app(app, async_mode=None, cors_allowed_origins="*")
-# sockets.init_app(app)
 sock.init_app(app)
 
 app.register_blueprint(users_bp)
@@ -71,23 +69,27 @@ def delete_file(file_path):
     except Exception as e:
         log.error(f"An error occurred while deleting file '{file_path}': {e}")
         pass
-def clear_log_tables():
+def recreate_log_tables():
     logs_db_manager.drop_table(INFO_LOGS_TABLE_NAME)
     logs_db_manager.drop_table(WARNING_LOGS_TABLE_NAME)
     logs_db_manager.drop_table(ERROR_LOGS_TABLE_NAME)
     logs_db_manager.drop_table(CRITICAL_LOGS_TABLE_NAME)
     logs_db_manager.drop_table(NOTSET_LOGS_TABLE_NAME)
+    logs_db_manager.create_table(DEBUG_LOGS_TABLE_NAME)
     logs_db_manager.create_table(INFO_LOGS_TABLE_NAME)
     logs_db_manager.create_table(WARNING_LOGS_TABLE_NAME)
     logs_db_manager.create_table(ERROR_LOGS_TABLE_NAME)
     logs_db_manager.create_table(CRITICAL_LOGS_TABLE_NAME)
     logs_db_manager.create_table(NOTSET_LOGS_TABLE_NAME)
-    print("dropped and created all logs tables")
+    logs_db_manager.create_table(DEBUG_LOGS_TABLE_NAME)
+    log.info("dropped and created all logs tables")
 def clear_everything():
     try:
-        clear_log_tables()
+        recreate_log_tables()
         emails_db_manager.drop_table()
         emails_db_manager.create_table()
+        scammers_db_manager.drop_table()
+        scammers_db_manager.create_table()
         gpt_db_manager.drop_table()
         gpt_db_manager.create_table()
         calls_db_manager.drop_table()
@@ -106,7 +108,7 @@ def clear_everything():
     except Exception as e:
         log.error(f"An error occurred while clearing everything: {e}")
     finally:
-        print("Clearing everything completed.")
+        log.info("Clearing everything completed.")
 def initialize_default_roles():
     roles = ['super admin', 'admin', 'user', 'guest']
     for role_name in roles:
@@ -134,6 +136,7 @@ def initialize_default_users():
             RolesDatabaseManager.assign_role_to_user(user_user, user_role)
 def fill_old_conversations():
     try:
+        OldConversationsDatabaseManager.create_table()
         if OldConversationsDatabaseManager.get_number_of_rows() >= 1244:
             print("old_conversations table already filled.")
             return
@@ -193,6 +196,7 @@ def initialize_app():
         initialize_default_users()
         settings_db_manager.create_table()
         emails_db_manager.create_table()
+        scammers_db_manager.create_table()
         gpt_db_manager.create_table()
         calls_db_manager.create_table()
         sms_db_manager.create_table()
@@ -203,13 +207,8 @@ def apply_caching(response):
     return response
 
 if __name__ == "__main__":
-    # clear_log_tables() # run this to clear all logs tables
+    # recreate_log_tables() # run this to clear all logs tables
     # clear_everything() # run this to clear everything
-    # Initialize scheduler:
     run_scheduler() # run this to start the scheduler in the background
     initialize_app()
-    # socketio.run(app, host="0.0.0.0", port=HTTP_SERVER_PORT, debug=True) # run this to start the server with socketio
-    # server = pywsgi.WSGIServer(('', HTTP_SERVER_PORT), app, handler_class=WebSocketHandler)
-    # print(f"Server listening on: (http://localhost:{str(HTTP_SERVER_PORT)}) with WebSocketHandler: ({WebSocketHandler})")
-    # server.serve_forever()
     app.run(host="0.0.0.0", port=HTTP_SERVER_PORT, debug=True)

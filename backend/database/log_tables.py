@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime
 import logging
 from globals import (
-    LOGGING_LEVEL, DEBUGGING_LOGS_TABLE_NAME, INFO_LOGS_TABLE_NAME, WARNING_LOGS_TABLE_NAME,
+    LOGGING_LEVEL, DEBUG_LOGS_TABLE_NAME, INFO_LOGS_TABLE_NAME, WARNING_LOGS_TABLE_NAME,
     ERROR_LOGS_TABLE_NAME, CRITICAL_LOGS_TABLE_NAME, NOTSET_LOGS_TABLE_NAME, DB_PATH
 )
 log = logging.getLogger('custom_logger.log_tables')
@@ -15,7 +15,7 @@ class LogsDatabaseManager:
         conn = sqlite3.connect(LogsDatabaseManager.db_path)
         conn.row_factory = sqlite3.Row
         return conn
-    allowed_tables = [DEBUGGING_LOGS_TABLE_NAME, INFO_LOGS_TABLE_NAME, WARNING_LOGS_TABLE_NAME, ERROR_LOGS_TABLE_NAME, CRITICAL_LOGS_TABLE_NAME, NOTSET_LOGS_TABLE_NAME]
+    allowed_tables = [DEBUG_LOGS_TABLE_NAME, INFO_LOGS_TABLE_NAME, WARNING_LOGS_TABLE_NAME, ERROR_LOGS_TABLE_NAME, CRITICAL_LOGS_TABLE_NAME, NOTSET_LOGS_TABLE_NAME]
     def __init__(self, db_path, table_name):
         self.db_path = db_path
         self.validate_table_name(table_name)
@@ -177,7 +177,7 @@ class LogsDatabaseManager:
     @staticmethod
     def delete_logs_by_level(level):
         if(level == 'DEBUG'):
-            table_name = DEBUGGING_LOGS_TABLE_NAME
+            table_name = DEBUG_LOGS_TABLE_NAME
         elif(level == 'INFO'):
             table_name = INFO_LOGS_TABLE_NAME
         elif(level == 'WARNING'):

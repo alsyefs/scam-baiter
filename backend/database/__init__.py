@@ -1,5 +1,6 @@
 from .settings_table import SettingsDatabaseManager
 from .emails_table import EmailsDatabaseManager
+from .scammers_table import ScammersDatabaseManager
 from .gpt_table import GPTDatabaseManager
 from .calls_table import CallsDatabaseManager
 from .sms_table import SmsDatabaseManager
@@ -11,6 +12,7 @@ from globals import DB_PATH, INFO_LOGS_TABLE_NAME
 
 settings_db_manager = SettingsDatabaseManager()
 emails_db_manager = EmailsDatabaseManager()
+scammers_db_manager = ScammersDatabaseManager()
 gpt_db_manager = GPTDatabaseManager()
 calls_db_manager = CallsDatabaseManager()
 sms_db_manager = SmsDatabaseManager()

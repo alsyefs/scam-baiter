@@ -1,4 +1,4 @@
-from .storer import store_addr, addr_exists, get_stored_info, scam_exists
+from .storer import store_addr, addr_exists, get_stored_info, scam_exists, update_addr
 from .gen import get_random_addr
 
 def gen_new_addr(scam_email, sol_name):

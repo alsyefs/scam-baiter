@@ -44,8 +44,7 @@ def scam_inbox():
         try:
             emailing_service.on_receive(request.form)
         except Exception as e:
-            log.error("An error occurred: %s", str(e))
-            log.error("", traceback.format_exc())
+            log.error(f"An error occurred: {str(e)}. Traceback: {traceback.format_exc()}")
     return "ok"
 
 @emails_bp.route('/create_emails_table')

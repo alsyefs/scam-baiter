@@ -1,10 +1,13 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from globals import (
     DB_PATH
 )
 from logs import LogManager
 log = LogManager.get_logger()
+
+ROWS_PER_PAGE = 100
+PAGE_START = 1
 
 class EmailsDatabaseManager:
     db_path = DB_PATH
@@ -63,27 +66,27 @@ class EmailsDatabaseManager:
         now = datetime.now()
         formatted_date = now.strftime("%Y-%m-%d")
         formatted_time = now.strftime("%H:%M:%S.%f")[:-3]
+        if EmailsDatabaseManager.is_scammer_by_two_emails(from_email, to_email) or is_outbound==1:
+            is_scammer=1
         sql_query = '''
             INSERT INTO email (from_email, to_email, subject, body, is_inbound, is_outbound, is_archived, is_handled, is_queued, date, time, is_scammer, replied_from)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         data_tuple = (from_email, to_email, subject, body, is_inbound, is_outbound, is_archived, is_handled, is_queued, formatted_date, formatted_time, is_scammer, replied_from)
+        if EmailsDatabaseManager.email_exists(from_email,to_email,subject,body):
+            log.info(f"(database) Email already exists.")
+            return
         conn = None
         try:
-            email_id = EmailsDatabaseManager.get_email_id_by_email_address_and_subject_and_body(from_email, to_email, subject, body)
-            if email_id is not None:
-                EmailsDatabaseManager.update_email_by_id(email_id, from_email, to_email, subject, body, is_inbound, is_outbound, is_archived, is_handled, is_queued, formatted_date, formatted_time, is_scammer, replied_from)
-                return
             conn = EmailsDatabaseManager.get_db_connection()
             cursor = conn.cursor()
             cursor.execute(sql_query, data_tuple)
             conn.commit()
+            log.info(f"(database) inserted email from ({from_email}) to ({to_email}).")
         except Exception as e:
             if conn:
                 conn.rollback()
-            log.error(f"Error inserting email: {e}")
-            log.error(f"Failed Query: {sql_query}")
-            log.error(f"Data: {data_tuple}")
+            log.error(f"Error inserting email: {e}. Failed Query: {sql_query}. Data: {data_tuple}.")
             raise
         finally:
             if conn:
@@ -104,7 +107,7 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_emails_pages(page=1, per_page=100):
+    def get_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
             conn = EmailsDatabaseManager.get_db_connection()
@@ -242,7 +245,7 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_inbound_emails_pages(page=1, per_page=100):
+    def get_inbound_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
             conn = EmailsDatabaseManager.get_db_connection()
@@ -274,7 +277,7 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_outbound_emails_pages(page=1, per_page=100):
+    def get_outbound_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
             conn = EmailsDatabaseManager.get_db_connection()
@@ -306,7 +309,7 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_archived_emails_pages(page=1, per_page=100):
+    def get_archived_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
             conn = EmailsDatabaseManager.get_db_connection()
@@ -338,7 +341,7 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_handled_emails_pages(page=1, per_page=100):
+    def get_handled_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
             conn = EmailsDatabaseManager.get_db_connection()
@@ -370,7 +373,7 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_queued_emails_pages(page=1, per_page=100):
+    def get_queued_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
             conn = EmailsDatabaseManager.get_db_connection()
@@ -402,7 +405,7 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_scammer_emails_pages(page=1, per_page=100):
+    def get_scammer_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
             conn = EmailsDatabaseManager.get_db_connection()
@@ -451,6 +454,47 @@ class EmailsDatabaseManager:
         finally:
             if conn:
                 conn.close()
+
+    @staticmethod
+    def email_exists(from_email, to_email, subject, body):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""SELECT date, time FROM email WHERE from_email=? AND to_email=? AND subject=? AND body=? ORDER BY id DESC LIMIT 1""", (from_email, to_email, subject, body))
+            email = cursor.fetchone()
+            if email is not None:
+                email_date, email_time = email
+                email_timestamp = datetime.strptime(f"{email_date} {email_time}", "%Y-%m-%d %H:%M:%S.%f")
+                current_timestamp = datetime.now()
+                if (current_timestamp - email_timestamp) > timedelta(minutes=1):  # Check if the email is newer than 1 minute
+                    return False  # If the email is older than 1 minute, it's considered not a duplicate
+                return True  # If within the last minute, it's a duplicate
+            return False  # If no email was found, it's not a duplicate
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+
+    @staticmethod
+    def get_last_email_by_email_address(from_email):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT body FROM email WHERE from_email=? order by id desc", (from_email,))
+            email = cursor.fetchone()
+            log.info(f"Last email: {email}")
+            return email
+        except Exception as e:
+            log.error(f"Error getting last email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+
     @staticmethod
     def update_email_by_id(email_id, from_email, to_email, subject, body, is_inbound, is_outbound, is_archived, is_handled, is_queued, date, time, is_scammer, replied_from):
         sql_query = '''
@@ -475,11 +519,7 @@ class EmailsDatabaseManager:
                 conn.close()
     @staticmethod
     def set_email_archived_by_email_id(email_id):
-        sql_query = '''
-            UPDATE email
-            SET is_archived=1
-            WHERE id=?
-        '''
+        sql_query = '''UPDATE email SET is_archived=1 WHERE id=?'''
         data_tuple = (email_id,)
         conn = None
         try:
@@ -495,6 +535,25 @@ class EmailsDatabaseManager:
         finally:
             if conn:
                 conn.close()
+    @staticmethod
+    def remove_email_queued_flag_by_email_id(email_id):
+        sql_query = '''UPDATE email SET is_queued=0 WHERE id=?'''
+        data_tuple = (email_id,)
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(sql_query, data_tuple)
+            conn.commit()
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            log.error(f"Error updating email: {e}. Failed Query: {sql_query}. Data: {data_tuple}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+
     @staticmethod
     def set_email_handled_by_email_id(email_id):
         sql_query = '''
@@ -629,11 +688,22 @@ class EmailsDatabaseManager:
         try:
             conn = EmailsDatabaseManager.get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE (from_email=? AND to_email=?) OR (from_email=? AND to_email=?) order by id desc", (email_address1, email_address2, email_address2, email_address1))
+            cursor.execute("""
+            SELECT * FROM email 
+            WHERE 
+            ((from_email=? AND to_email=?) OR (from_email=? AND to_email=?))
+            OR 
+            ((from_email=? AND to_email='CRAWLER') OR (from_email='CRAWLER' AND to_email=?))
+            OR
+            ((from_email=? AND to_email='CRAWLER') OR (from_email='CRAWLER' AND to_email=?))
+            ORDER BY id DESC
+            """, (email_address1, email_address2, email_address2, email_address1, email_address1, email_address1, email_address2, email_address2))
             emails = cursor.fetchall()
             for email in emails:
                 if email['is_scammer'] == 1:
+                    log.info(f"Scammer email found in: ({email_address1}) or ({email_address2})")
                     return True
+            log.info(f"Scammer email ({email_address1}) or ({email_address2}) not found.")
             return False
         except Exception as e:
             log.error(f"Error getting email: {e}")

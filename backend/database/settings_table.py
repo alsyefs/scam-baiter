@@ -43,10 +43,9 @@ class SettingsDatabaseManager:
             if len(rows) == 0:
                 cursor.execute('''INSERT INTO settings (cron_state, settings_update_datetime) VALUES (?, ?)''', ('stopped', datetime.now()))
                 conn.commit()
-                # log.info(f"Inserted default settings")
-                print(f"Inserted default settings")
+                log.info(f"Inserted default settings. cron_state: 'stopped'")
         except Exception as e:
-            log.error(f"Error inserting default settings: {e}")
+            log.error(f"(database) Error inserting default settings: {e}")
             raise
         finally:
             conn.close()

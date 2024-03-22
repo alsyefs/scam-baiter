@@ -1,17 +1,17 @@
 import json
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0 = TensorFlow all messages are logged (default behavior)
-                                          # 1 = TensorFlow INFO messages are not printed
-                                          # 2 = TensorFlow INFO and WARNING messages are not printed
-                                          # 3 = TensorFlow INFO, WARNING, and ERROR messages are not printed
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-import tensorflow as tf
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0 = TensorFlow all messages are logged (default behavior)
+#                                           # 1 = TensorFlow INFO messages are not printed
+#                                           # 2 = TensorFlow INFO and WARNING messages are not printed
+#                                           # 3 = TensorFlow INFO, WARNING, and ERROR messages are not printed
+# os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+# import tensorflow as tf
 import shutil
 import sys
 import traceback
 import atexit
 import signal
-from globals import MAIL_SAVE_DIR, MAIL_HANDLED_DIR, MAX_TOKENS, GPT_MODEL, MAX_EMAILS_TO_HANDLE, EMAILS_DIRECTORY
+from globals import MAIL_QUEUED_DIR, MAIL_HANDLED_DIR, MAX_TOKENS, GPT_MODEL, MAX_EMAILS_TO_HANDLE, EMAILS_DIRECTORY
 import tiktoken
 import emailing_service
 import responder
@@ -21,6 +21,7 @@ import crawler
 from logs import LogManager
 log = LogManager.get_logger()
 from database.emails_table import EmailsDatabaseManager
+from database.scammers_table import ScammersDatabaseManager
 
 
 mymodel = GPT_MODEL
@@ -29,14 +30,14 @@ def main(crawl=True):
     if crawl:
         crawler.fetch_all()
         log.info("Crawling done")
-    email_filenames = os.listdir(MAIL_SAVE_DIR)
+    email_filenames = os.listdir(MAIL_QUEUED_DIR)
     count = 0
     log.info(f"Handling {len(email_filenames)} emails")
     for email_filename in email_filenames:
         if count < MAX_EMAILS_TO_HANDLE:
             try:
                 log.info(f"Handling {email_filename}")
-                email_path = os.path.join(MAIL_SAVE_DIR, email_filename)
+                email_path = os.path.join(MAIL_QUEUED_DIR, email_filename)
                 with open(email_path, "r", encoding="utf8") as f:
                     email_obj = json.load(f)
                 text = email_obj["content"]
@@ -56,7 +57,6 @@ def main(crawl=True):
                         log.info("This crawled email has been replied to. Ignored")
                         os.remove(email_path)
                         continue
-                        # pass
                     archive(True, scam_email, "CRAWLER", email_obj["title"], text)
                     replier = responder.get_replier_randomly()
                     bait_email = solution_manager.gen_new_addr(scam_email, replier.name)
@@ -67,63 +67,66 @@ def main(crawl=True):
                     if stored_info is None:
                         log.warning(f"Cannot find replier for {bait_email}")
                         os.remove(email_path)
+                        remove_queued_flag(email_obj["from"], email_obj["bait_email"], email_obj["title"], email_obj["content"])
                         continue
-                    log.info(f"Found selected replier {stored_info.sol}")
-                    replier = responder.get_replier_by_name(stored_info.sol)
+                    log.info(f"Found selected replier {stored_info.strategy}")
+                    replier = responder.get_replier_by_name(stored_info.strategy)
                     if replier is None:
-                        log.info(f"Replier {stored_info.sol} was not found for {email_path}")
+                        log.info(f"Replier {stored_info.strategy} was not found for {email_path}")
                         os.remove(email_path)
                         continue
                 try:
-                    res_text = replier.get_reply(text)
+                    generated_response, new_summary_context = replier.get_reply(text, stored_info.summary_context)
+                    log.info(f"Summary context for email ({scam_email}) old: ({stored_info.summary_context}). new: ({new_summary_context})")
+                    if new_summary_context and new_summary_context != "":
+                        log.info(f"Updating summary context for email ({scam_email})")
+                        solution_manager.update_addr(bait_email, scam_email, stored_info.strategy, stored_info.username, new_summary_context)
+                        ScammersDatabaseManager.update_scammer_summary_context(scam_email, new_summary_context, bait_email, stored_info.username, stored_info.strategy)
                 except Exception as e:
-                    log.error("GENERATING ERROR")
-                    log.error("", e)
-                    log.error("", traceback.format_exc())
-                    log.error("Due to CUDA Error, stopping whole sequence")
+                    log.error(f"ERROR GENERATING.\n{e}. \nSkipping this email.\ntraceback: {traceback.format_exc()}")
                     return
-                res_text += f"\n\nBest wishes,\n{stored_info.username}" # Adding a signature
-                send_result = emailing_service.send_email(stored_info.username, stored_info.addr, scam_email, subject, res_text)
+                generated_response += f"\n\nBest wishes,\n{stored_info.username}" # Adding a signature
+                send_result = emailing_service.send_email(stored_info.username, stored_info.addr, scam_email, subject, generated_response)
                 if send_result:
                     log.info(f"Successfully sent response to {scam_email}")
                     count += 1
                     if not os.path.exists(MAIL_HANDLED_DIR): # Move from queued to handled dir
                         os.makedirs(MAIL_HANDLED_DIR)
-                    shutil.move(email_path, os.path.join(MAIL_HANDLED_DIR, email_filename))
-                    try:
-                        email_id = EmailsDatabaseManager.get_email_id_by_email_address_and_subject_and_body(stored_info.addr, scam_email, subject, res_text)
-                        if email_id is not None:
-                            EmailsDatabaseManager.set_email_handled_by_email_id(email_id)
-                            EmailsDatabaseManager.set_email_outbound_by_email_id(email_id)
-                            if EmailsDatabaseManager.is_scammer_by_two_emails(stored_info.addr, scam_email):
-                                EmailsDatabaseManager.set_email_scammer_by_email_id(email_id)
-                        else:
-                            is_scammer = 0
-                            if EmailsDatabaseManager.is_scammer_by_two_emails(stored_info.addr, scam_email) or bait_email == 'CRAWLER':
-                                is_scammer = 1
-                            EmailsDatabaseManager.insert_email(
-                                from_email=stored_info.addr,
-                                to_email=scam_email,
-                                subject=subject,
-                                body=res_text,
-                                is_inbound=0,
-                                is_outbound=1,
-                                is_archived=0,
-                                is_handled=1,
-                                is_queued=0,
-                                is_scammer=is_scammer,
-                                replied_from=''
-                            )
-                    except Exception as e:
-                        log.error(f"Error while inserting email into database: {e}")
-                    archive(False, scam_email, bait_email, subject, res_text)
+                    shutil.move(email_path, os.path.join(MAIL_HANDLED_DIR, email_filename)) # Move the email to the handled directory
+                    store_sent_email_database(stored_info.addr, scam_email, subject, generated_response)
+                    archive(False, scam_email, bait_email, subject, generated_response)
                 else:
                     log.error(f"Failed to send response to {scam_email}")
             except Exception as e:
-                log.error("", e)
-                log.error("", traceback.format_exc())
+                log.error(f"Error in cron job: {e}. Traceback: {traceback.format_exc()}")
         else:
             break
+def store_sent_email_database(email_from, email_to, email_subject, email_body):
+    try:
+        EmailsDatabaseManager.insert_email(
+            from_email=email_from,
+            to_email=email_to,
+            subject=email_subject,
+            body=email_body,
+            is_inbound=0,
+            is_outbound=1,
+            is_archived=0,
+            is_handled=1,
+            is_queued=0,
+            is_scammer=0,
+            replied_from=''
+        )
+    except Exception as e:
+        log.error(f"Error while inserting email into database: {e}")
+
+def remove_queued_flag(email_from, email_to, email_subject, email_body):
+    try:
+        email_id = EmailsDatabaseManager.get_email_id_by_email_address_and_subject_and_body(email_from, email_to, email_subject, email_body)
+        EmailsDatabaseManager.remove_email_queued_flag_by_email_id(email_id)
+        log.info(f"Removed email with ID ({email_id}) from the queue.")
+    except Exception as e:
+        log.error(f"Error while removing queued flag: {e}")
+
 
 def create_lock_file():
     try:
@@ -147,7 +150,7 @@ def cleanup():
     """Cleanup function to delete the lock file, called when exiting."""
     try:
         delete_lock_file()
-        log.info("--------------------- End of cron job ---------------------\n\n")
+        log.info("--------------------- End of cron job   -------------------\n\n")
         cleanup_executed = True
     except Exception as e:
         log.error(f"An error occurred during cleanup: {e}")
@@ -163,7 +166,7 @@ def handle_sigterm(*args):
         sys.exit(0)
 
 def prepare_main(crawl=True):
-    log.info("--------------------- Start of cron job ---------------------")
+    log.info("--------------------- Start of cron job -------------------")
     signal.signal(signal.SIGTERM, handle_sigterm)
     atexit.register(cleanup)
     if os.path.exists("./lock"):

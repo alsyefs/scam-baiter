@@ -11,7 +11,7 @@ from logs import LogManager
 log = LogManager.get_logger()
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-def generate_text(gpt_model, messages, temperature=0.2, top_p=0.2):
+def generate_text(gpt_model, messages, temperature=0.7, top_p=1.0):
     general_message = "Apologies, but I do not know what do you mean by that."
     prompt = None
     completion = None
@@ -21,7 +21,7 @@ def generate_text(gpt_model, messages, temperature=0.2, top_p=0.2):
     try:
         username = session.get('username', 'system')
     except Exception:
-        print("Error getting username from session")
+        print("No username in session so the system is the user to handle a request to OpenAI.")
         pass
     try:
         gpt_instructions = None

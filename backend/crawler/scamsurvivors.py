@@ -7,7 +7,7 @@ from requests import session
 from langdetect import detect, LangDetectException
 from collections import namedtuple
 import re
-from globals import MAIL_SAVE_DIR, CRAWLER_PROG_DIR, MAX_PAGE_SS
+from globals import MAIL_QUEUED_DIR, CRAWLER_PROG_DIR, MAX_PAGE_SS
 from logs import LogManager
 log = LogManager.get_logger()
 from database.emails_table import EmailsDatabaseManager
@@ -17,9 +17,9 @@ BASE_URL = "https://www.scamsurvivors.com/forum/"
 EMAIL_RE = re.compile(r"^\w+?@\w+?\.\w+$")
 s = session()
 TopicInfo = namedtuple("TopicInfo", ["scam_addr", "url"])
-if not os.path.exists(MAIL_SAVE_DIR):
-    log.info(f"Creating directory {MAIL_SAVE_DIR}")
-    os.makedirs(MAIL_SAVE_DIR)
+if not os.path.exists(MAIL_QUEUED_DIR):
+    log.info(f"Creating directory {MAIL_QUEUED_DIR}")
+    os.makedirs(MAIL_QUEUED_DIR)
 if not os.path.exists(CRAWLER_PROG_DIR):
     log.info(f"Creating directory {CRAWLER_PROG_DIR}")
     os.makedirs(CRAWLER_PROG_DIR)
@@ -96,32 +96,28 @@ def fetch():
         to_email = "CRAWLER"
         info = {"title": title, "content": content, "url": topic_info.url, "from": from_email}
         file_name = topic_info.url.rsplit("/", 1)[1].split("&")[1].replace("t=", "ss_")
-        output_path = f"{MAIL_SAVE_DIR}/{file_name}.json"
+        output_path = f"{MAIL_QUEUED_DIR}/{file_name}.json"
         with open(output_path, "w", encoding="utf8") as f:
             json.dump(info, f, indent=4)
-        try:
-            email_id = EmailsDatabaseManager.get_email_id_by_email_address_and_subject_and_body(from_email, to_email, title, content)
-            if email_id is not None:
-                EmailsDatabaseManager.set_email_scammer_by_email_id(email_id)
-                EmailsDatabaseManager.set_email_queued_by_email_id(email_id)
-                EmailsDatabaseManager.set_email_inbound_by_email_id(email_id)
-                if EmailsDatabaseManager.is_scammer_by_two_emails(from_email, to_email) or from_email == 'CRAWLER' or to_email == 'CRAWLER':
-                    EmailsDatabaseManager.set_email_scammer_by_email_id(email_id)
-            else:
-                EmailsDatabaseManager.insert_email(
-                    from_email=from_email,
-                    to_email=to_email,
-                    subject=title,
-                    body=content,
-                    is_inbound=1,
-                    is_outbound=0,
-                    is_archived=0,
-                    is_handled=0,
-                    is_queued=1,
-                    is_scammer=1,
-                    replied_from=''
-                )
-        except Exception as e:
-            log.error(f"Error while inserting email into database: {e}")
+        store_email_database(from_email, to_email, title, content)
+            
+def store_email_database(from_email, to_email, subject, body):
+    try:
+        EmailsDatabaseManager.insert_email(
+            from_email=from_email,
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            is_inbound=1,
+            is_outbound=0,
+            is_archived=0,
+            is_handled=0,
+            is_queued=1,
+            is_scammer=1,
+            replied_from=''
+        )
+    except Exception as e:
+        log.error(f"(database) Error while inserting crawled email: {e}")
+
 if __name__ == '__main__':
     fetch()
