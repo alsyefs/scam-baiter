@@ -7,22 +7,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 from globals import (
-    BASE_DIR, MAIL_QUEUED_DIR, MAIL_ARCHIVE_DIR, UNIQUE_EMAIL_QUEUED,
+    BASE_DIR, MAIL_SAVE_DIR, MAIL_ARCHIVE_DIR, UNIQUE_EMAIL_QUEUED,
     UNIQUE_EMAIL_QUEUED_DUPLICATE, EMAIL_ARCHIVED_CLEANED_DIR,
-    EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR, SCAMMERS_EMAILS_FILE_PATH,
+    EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR, ADDR_SOL_PATH,
     EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_MOST_CONVERSATIONS,
     EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LONGEST_CONVERSATIONS,
+    EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LEAST_CONVERSATIONS,
     MAILGUN_DOMAIN_NAME, EMAIL_ARCHIVED_REPORT, EMAILS_REPORT_DIR,
     EMAIL_CONVERSATIONS_REPORT_CSV, EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV
 )
 HIDE_EMAILS = True
-# CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1' # old strategy name, uncompress emails_old_gpt.zip
-# CHAT_2_STRATEGY_NAME = 'gpt-4-Chat2' # old strategy name, uncompress emails_old_gpt.zip
-CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1'          # new strategy name, uncompress emails_new_gpt.zip
-CHAT_2_STRATEGY_NAME = 'gpt-3.5-turbo-Chat2'  # new strategy name, uncompress emails_new_gpt.zip
+CHAT_1_STRATEGY_NAME = 'gpt-4-Chat1'
+CHAT_2_STRATEGY_NAME = 'gpt-3.5-turbo-Chat2'
 
 def get_sol_from_addr_sol_path(email_to, email_from):
-    with open(SCAMMERS_EMAILS_FILE_PATH, 'r') as f:
+    with open(ADDR_SOL_PATH, 'r') as f:
         addr_sol_data = json.load(f)
     chat_1 = CHAT_1_STRATEGY_NAME
     chat_2 = CHAT_2_STRATEGY_NAME
@@ -41,14 +40,14 @@ def get_sol_from_addr_sol_path(email_to, email_from):
     if result:
         return result
 
-def check_duplicate_queued_emails(hide_emails=True):
+def check_duplicate_queued_emails():
     os.makedirs(EMAILS_REPORT_DIR, exist_ok=True)
     email_set = set()
     email_dup_set = set()
     email_count = 0
-    total_files_to_process = sum(1 for filename in os.listdir(MAIL_QUEUED_DIR) if filename.endswith(".json"))
+    total_files_to_process = sum(1 for filename in os.listdir(MAIL_SAVE_DIR) if filename.endswith(".json"))
     with tqdm(total=total_files_to_process) as progress_bar:
-        for filename in os.listdir(MAIL_QUEUED_DIR):
+        for filename in os.listdir(MAIL_SAVE_DIR):
             progress_bar.update(1)
             if filename.endswith(".json"):
                 file_path = os.path.join(BASE_DIR, "emails", "queued", filename)
@@ -71,7 +70,7 @@ def check_duplicate_queued_emails(hide_emails=True):
             print(f"Number of duplicate queued emails to be interacted with: ({len(email_dup_set)}).")
             file.write(f"Number of unique queued emails to be interacted with: ({len(email_set)}).\n")
             print(f"Number of unique queued emails to be interacted with: ({len(email_set)}).")
-    if not hide_emails:
+    if not HIDE_EMAILS:
         with open(UNIQUE_EMAIL_QUEUED, "w", encoding="utf8") as f:
             total_files_to_process = sum(1 for email in email_set)
             with tqdm(total=total_files_to_process) as progress_bar:
@@ -85,32 +84,30 @@ def check_duplicate_queued_emails(hide_emails=True):
                     progress_bar.update(1)
                     f.write(email + "\n")
 
-def clean_and_sort_conversations(source_directory, output_directory,
-                                 conversations_directory,
-                                 most_conversations_directory,
-                                 longest_conversations_directory,
-                                 report_file,
-                                 hide_emails=True):
-    os.makedirs(output_directory, exist_ok=True)
-    os.makedirs(conversations_directory, exist_ok=True)
-    os.makedirs(most_conversations_directory, exist_ok=True)
-    os.makedirs(longest_conversations_directory, exist_ok=True)
+def clean_and_sort_conversations():
+    os.makedirs(EMAIL_ARCHIVED_CLEANED_DIR, exist_ok=True)
+    os.makedirs(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR, exist_ok=True)
+    os.makedirs(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_MOST_CONVERSATIONS, exist_ok=True)
+    os.makedirs(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LEAST_CONVERSATIONS, exist_ok=True)
+    os.makedirs(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LONGEST_CONVERSATIONS, exist_ok=True)
     os.makedirs(EMAILS_REPORT_DIR, exist_ok=True)
     conversation_counts = {}
-    total_files_to_process = sum(1 for filename in os.listdir(source_directory) if filename.endswith(".json") and not filename.endswith("_history.json"))
+    total_files_to_process = sum(1 for filename in os.listdir(MAIL_ARCHIVE_DIR) if filename.endswith(".json") and not filename.endswith("_history.json"))
     file_count = 0
     total_days_scambaiting = 0
     with tqdm(total=total_files_to_process) as progress_bar:
-        for filename in os.listdir(source_directory):
+        for filename in os.listdir(MAIL_ARCHIVE_DIR):
             if filename.endswith(".json") and not filename.endswith("_history.json"):
                 progress_bar.update(1)
                 file_count += 1
-                file_path = os.path.join(source_directory, filename)
-                if hide_emails:
+                file_path = os.path.join(MAIL_ARCHIVE_DIR, filename)
+                if HIDE_EMAILS:
                         filename = "scammer" + "_" + str(file_count) + ".json"
                 conversations = []
                 unique_emails = set()
                 conversation_counter = 0
+                inbound_emails = 0
+                outbound_emails = 0
                 with open(file_path, 'r', encoding='utf-8') as file:
                     strategy_name = None
                     for line in file:
@@ -139,7 +136,7 @@ def clean_and_sort_conversations(source_directory, output_directory,
                                     conversation_counter = 0
                                     first_email_time = email['time']
                                 email["conversation_counter"] = str(conversation_counter)
-                                if hide_emails:
+                                if HIDE_EMAILS:
                                     email.pop('time')
                                     if "@"+MAILGUN_DOMAIN_NAME in email["from"]:
                                         email["from"] = "baiter" + "_" + str(file_count)
@@ -159,25 +156,38 @@ def clean_and_sort_conversations(source_directory, output_directory,
                                 email["subject"] = email_subject
                                 email["body"] = email_body
                                 conversations.append(email)
+                                if email['direction'] == "Inbound" and email['to'] != "CRAWLER":
+                                    inbound_emails += 1
+                                elif email['direction'] == "Outbound" and email['to'] != "CRAWLER":
+                                    outbound_emails += 1
                         except json.JSONDecodeError as e:
                             print(f"Error decoding JSON in {filename}: {e}")
                 if conversations:
-                    cleaned_file_path = os.path.join(output_directory, filename)
+                    cleaned_file_path = os.path.join(EMAIL_ARCHIVED_CLEANED_DIR, filename)
                     with open(cleaned_file_path, 'w', encoding='utf-8') as cleaned_file:
                         json.dump(conversations, cleaned_file, ensure_ascii=False, indent=4)
-                    conversation_counts[filename] = len(conversations)
+                    total_emails = inbound_emails + outbound_emails
+                    conversation_counts[filename] = {
+                        'filename': filename,
+                        'total_emails': total_emails,
+                        'inbound_emails': inbound_emails,
+                        'outbound_emails': outbound_emails
+                        }
     if conversation_counts:
         files_with_more_than_one_conversation = 0
         total_conversations = 0
         conversations_report = {}
-        for filename, count in conversation_counts.items():
-            if count > 2:
+        for filename, counts in conversation_counts.items():
+            total_emails = counts['total_emails']
+            inbound_emails = counts['inbound_emails']
+            outbound_emails = counts['outbound_emails']
+            if total_emails > 1 and inbound_emails > 0 and outbound_emails > 0:  # Number of messages with scammer. # Only copy files with more than two conversations
                 files_with_more_than_one_conversation += 1
-                total_conversations += count
-                source_path = os.path.join(output_directory, filename)
-                destination_path = os.path.join(conversations_directory, filename)
+                total_conversations += total_emails
+                source_path = os.path.join(EMAIL_ARCHIVED_CLEANED_DIR, filename)
+                destination_path = os.path.join(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR, filename)
                 copy2(source_path, destination_path)
-                with open(os.path.join(output_directory, filename), 'r', encoding='utf-8') as file:
+                with open(os.path.join(EMAIL_ARCHIVED_CLEANED_DIR, filename), 'r', encoding='utf-8') as file:
                     emails = json.load(file)
                 days_from_first_conversation = emails[-1]['days_from_first_conversation']
                 scambaiting_strategy = emails[-1]['startegy']
@@ -190,6 +200,7 @@ def clean_and_sort_conversations(source_directory, output_directory,
                                                   'outbounds': outbound_emails,
                                                   'inbounds': inbound_emails}
         most_conversations = {k: v for k, v in sorted(conversations_report.items(), key=lambda item: item[1]['number_of_conversations'], reverse=True)}
+        least_conversations = {k: v for k, v in sorted(conversations_report.items(), key=lambda item: item[1]['number_of_conversations'])}
         longest_conversations_in_days = {k: v for k, v in sorted(conversations_report.items(), key=lambda item: item[1]['days_from_first_conversation'], reverse=True)}
         strategy_counts = {}
         for conversation in conversations_report.values(): # Initialize counts for each strategy
@@ -201,7 +212,7 @@ def clean_and_sort_conversations(source_directory, output_directory,
             if 'None' not in conversation['strategy']:
                 strategy = conversation['strategy']
                 strategy_counts[strategy] += 1
-        with open(report_file, "a", encoding="utf-8") as file:
+        with open(EMAIL_ARCHIVED_REPORT, "a", encoding="utf-8") as file:
             for strategy, count in strategy_counts.items():
                 file.write(f"Strategy ({strategy}) was used with ({count}) conversation threads.\n")
                 print(f"Strategy ({strategy}) was used with ({count}) conversation threads.")
@@ -218,9 +229,20 @@ def clean_and_sort_conversations(source_directory, output_directory,
                 counter+=1
                 file.write(f"{counter}. Conversations with ({filename.replace('.json', '')}) took ({days['days_from_first_conversation']}) days and had ({days['number_of_conversations']}) conversations, ({days['inbounds']}) as inbounds and ({days['outbounds']}) outbounds, using ({days['strategy']}).\n")
                 print(f"{counter}. Conversations with ({filename.replace('.json', '')}) took ({days['days_from_first_conversation']}) days and had ({days['number_of_conversations']}) conversations, ({days['inbounds']}) as inbounds and ({days['outbounds']}) outbounds, using ({days['strategy']}).")
-                source_path = os.path.join(output_directory, filename)
-                destination_path = os.path.join(most_conversations_directory, filename)
+                source_path = os.path.join(EMAIL_ARCHIVED_CLEANED_DIR, filename)
+                destination_path = os.path.join(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_MOST_CONVERSATIONS, filename)
                 copy2(source_path, destination_path)
+            
+            file.write(f"\n*** Top 10 least conversations with scammers: \n")
+            print(f"\n*** Top 10 least conversations with scammers:")
+            for filename, days in list(least_conversations.items())[:10]:
+                counter+=1
+                file.write(f"{counter}. Conversations with ({filename.replace('.json', '')}) took ({days['days_from_first_conversation']}) days and had ({days['number_of_conversations']}) conversations, ({days['inbounds']}) as inbounds and ({days['outbounds']}) outbounds, using ({days['strategy']}).\n")
+                print(f"{counter}. Conversations with ({filename.replace('.json', '')}) took ({days['days_from_first_conversation']}) days and had ({days['number_of_conversations']}) conversations, ({days['inbounds']}) as inbounds and ({days['outbounds']}) outbounds, using ({days['strategy']}).")
+                source_path = os.path.join(EMAIL_ARCHIVED_CLEANED_DIR, filename)
+                destination_path = os.path.join(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LEAST_CONVERSATIONS, filename)
+                copy2(source_path, destination_path)
+
             file.write(f"\n*** Top 10 longest conversations with scammers: \n")
             print(f"\n*** Top 10 longest conversations with scammers:")
             counter = 0
@@ -228,8 +250,8 @@ def clean_and_sort_conversations(source_directory, output_directory,
                 counter+=1
                 file.write(f"{counter}. Conversations with ({filename.replace('.json', '')}) took ({days['days_from_first_conversation']}) days and had ({days['number_of_conversations']}) conversations, ({days['inbounds']}) as inbounds and ({days['outbounds']}) outbounds, using ({days['strategy']}).\n")
                 print(f"{counter}. Conversations with ({filename.replace('.json', '')}) took ({days['days_from_first_conversation']}) days and had ({days['number_of_conversations']}) conversations, ({days['inbounds']}) as inbounds and ({days['outbounds']}) outbounds, using ({days['strategy']}).")
-                source_path = os.path.join(output_directory, filename)
-                destination_path = os.path.join(longest_conversations_directory, filename)
+                source_path = os.path.join(EMAIL_ARCHIVED_CLEANED_DIR, filename)
+                destination_path = os.path.join(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LONGEST_CONVERSATIONS, filename)
                 copy2(source_path, destination_path)
             counter = 0
             file.write(f"\n*** All conversations with scammers: \n")
@@ -519,18 +541,11 @@ def plot_chart_avg_conversations_per_thread(strategies):
 
 if __name__ == "__main__":
     print(f"Running...")
-    hide_emails = HIDE_EMAILS
-    print(f"1. Checking duplicate emails in ({os.path.relpath(MAIL_QUEUED_DIR, BASE_DIR)})...")
-    check_duplicate_queued_emails(hide_emails=hide_emails)
+    print(f"1. Checking duplicate emails in ({os.path.relpath(MAIL_SAVE_DIR, BASE_DIR)})...")
+    check_duplicate_queued_emails()
     print(f"2. Completed checking duplicate emails. Stored unique and duplicate emails in ({os.path.relpath(UNIQUE_EMAIL_QUEUED, BASE_DIR)}) and ({os.path.relpath(UNIQUE_EMAIL_QUEUED_DUPLICATE, BASE_DIR)}) respectively.")
     print(f"3. Reading files in ({os.path.relpath(MAIL_ARCHIVE_DIR, BASE_DIR)}) for cleaning and sorting conversations...")
-    clean_and_sort_conversations(MAIL_ARCHIVE_DIR,
-                                 EMAIL_ARCHIVED_CLEANED_DIR,
-                                 EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR,
-                                 EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_MOST_CONVERSATIONS,
-                                 EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LONGEST_CONVERSATIONS,
-                                 EMAIL_ARCHIVED_REPORT,
-                                 hide_emails=hide_emails)
+    clean_and_sort_conversations()
     print(f"\n4. Copied the files from ({os.path.relpath(MAIL_ARCHIVE_DIR, BASE_DIR)}), cleaned them, sorted them, added startegy, then made another copy to ({os.path.relpath(EMAIL_ARCHIVED_CLEANED_DIR, BASE_DIR)}) without affecting the original files.")
     print(f"5. Created a copy of conversations with more than one conversation in ({os.path.relpath(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR, BASE_DIR)}).")
     print(f"6. Created a copy of top 10 conversations with the maximum number of conversations in ({os.path.relpath(EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_MOST_CONVERSATIONS, BASE_DIR)}).")

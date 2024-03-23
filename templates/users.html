@@ -21,8 +21,10 @@
             <th>Role</th>
             <th>Created</th>
             <th>Updated</th>
+            {% if session.username and 'super admin' in user_roles %}
             <th>Clear password</th>
             <th>Delete user</th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -40,11 +42,15 @@
                         </option>
                         {% endfor %}
                     </select>
+                    
+                    {% if session.username and 'super admin' in user_roles %}
                     <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                    {% endif %}
                 </form>
             </td>                
             <td>{{ user.created }}</td>
             <td>{{ user.updated }}</td>
+            {% if session.username and 'super admin' in user_roles %}
             <td>
                 <form action="{{ url_for('users.clear_password') }}" method="post" onsubmit="return confirm('Are you sure you want to set Password to \'123\' for this user?');">
                     <input type="hidden" name="user_id" value="{{ user.id }}">
@@ -57,6 +63,7 @@
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
             </td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>

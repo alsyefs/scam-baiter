@@ -77,7 +77,7 @@ def main(crawl=True):
                         continue
                 try:
                     generated_response, new_summary_context = replier.get_reply(text, stored_info.summary_context)
-                    log.info(f"Summary context for email ({scam_email}) old: ({stored_info.summary_context}). new: ({new_summary_context})")
+                    log.info(f"Summary context for email ({scam_email})\nOld context: ({stored_info.summary_context}).\nNew context: ({new_summary_context}).")
                     if new_summary_context and new_summary_context != "":
                         log.info(f"Updating summary context for email ({scam_email})")
                         solution_manager.update_addr(bait_email, scam_email, stored_info.strategy, stored_info.username, new_summary_context)

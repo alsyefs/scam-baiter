@@ -3,35 +3,34 @@
 {% block content %}
 <div class="container-fluid">
     <h2>Emails</h2>
-
+    {% if 'super admin' in user_roles %}
     <h3>Compose New Email</h3>
-<form id="new-email-form">
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label for="fromEmail" class="form-label">From:</label>
-            <input type="text" class="form-control" id="fromEmail" name="from_email" placeholder="" required>
-            <label for="fromEmail" class="form-label" id="lblFromEmail"></label>
+    <form id="new-email-form">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="fromEmail" class="form-label">From:</label>
+                <input type="text" class="form-control" id="fromEmail" name="from_email" placeholder="" required>
+                <label for="fromEmail" class="form-label" id="lblFromEmail"></label>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="toEmail" class="form-label">To:</label>
+                <input type="email" class="form-control" id="toEmail" name="to_email" required>
+            </div>
         </div>
-        <div class="col-md-6 mb-3">
-            <label for="toEmail" class="form-label">To:</label>
-            <input type="email" class="form-control" id="toEmail" name="to_email" required>
+        <div class="mb-3">
+            <label for="emailSubject" class="form-label">Subject:</label>
+            <input type="text" class="form-control" id="emailSubject" name="subject" required>
         </div>
-    </div>
-    <div class="mb-3">
-        <label for="emailSubject" class="form-label">Subject:</label>
-        <input type="text" class="form-control" id="emailSubject" name="subject" required>
-    </div>
-    <div class="mb-3">
-        <label for="emailBody" class="form-label">Body:</label>
-        <textarea class="form-control" id="emailBody" name="body" rows="3" required></textarea>
-    </div>
-    <button type="submit" class="btn btn-primary">Send</button>
-</form>
-
+        <div class="mb-3">
+            <label for="emailBody" class="form-label">Body:</label>
+            <textarea class="form-control" id="emailBody" name="body" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+    {% endif %}
 
     <!-- Email Table -->
     <h3>Inbox</h3>
-    
     <!-- Filter Section -->
     <div class="filter-section d-flex align-items-center">
         <h4>Filters</h4>
@@ -55,7 +54,7 @@
             <input class="form-check-input" type="radio" name="emailFilter" id="filterArchived" value="archived">
             <label class="form-check-label" for="filterArchived">Archived</label>
         </div>
-        
+
         <div class="form-check">
             <input class="form-check-input" type="radio" name="emailFilter" id="filterHandled" value="handled">
             <label class="form-check-label" for="filterHandled">Handled</label>
@@ -67,7 +66,7 @@
         <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
         <button class="btn btn-secondary" onclick="downloadCSV()">Download as CSV</button>
     </div>
-    
+
     <table class="table table-striped" id="emails-table">
         <thead>
             <tr>
@@ -99,77 +98,84 @@
     <nav aria-label="Email pagination 1">
         <ul class="pagination justify-content-center" id="email-pagination-1"></ul>
     </nav>
-  
+
     <!-- Modal -->
-    <div class="modal fade" id="emailModal" tabindex="-1" role="dialog" aria-labelledby="emailModalLabel" aria-hidden="true">
+    <div class="modal fade" id="emailModal" tabindex="-1" role="dialog" aria-labelledby="emailModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-            <h5 class="modal-title" id="emailModalLabel">Email Details</h5>
-            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="emailModalLabel">Email Details</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Details will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
-            <div class="modal-body">
-            <!-- Details will be inserted here -->
-            </div>
-            <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    domainName = getDomain();
-    const form = document.getElementById('new-email-form');
-    form.addEventListener('submit', function(event) {
-        event.preventDefault();
-        form.fromEmail.value = form.fromEmail.value.replace('@'+domainName, '');
-        const data = {
-            username: form.fromEmail.value,
-            address: form.fromEmail.value + '@'+domainName,
-            target: form.toEmail.value,
-            subject: form.emailSubject.value,
-            text: form.emailBody.value
-        };
-        sendEmail(data);
+    document.addEventListener('DOMContentLoaded', function () {
+        try{
+            domainName = getDomain();
+            const form = document.getElementById('new-email-form');
+            if (form) {
+                form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                form.fromEmail.value = form.fromEmail.value.replace('@' + domainName, '');
+                const data = {
+                    username: form.fromEmail.value,
+                    address: form.fromEmail.value + '@' + domainName,
+                    target: form.toEmail.value,
+                    subject: form.emailSubject.value,
+                    text: form.emailBody.value
+                };
+                sendEmail(data);
+            });
+            }
+            loadInboxPages();
+            fetchEmailCount();
+        } catch (error) {
+            console.error('Error:', error);
+        }
     });
-    loadInboxPages();
-    fetchEmailCount();
-});
-function sendEmail(data) {
-    fetch('/send_email', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        loadInboxPages();
-    })
-    .catch(error => console.error('Error:', error));
-}
-function loadInboxPages(page = 1, endpoint = `/get_all_emails_pages`) {
-    endpoint += `?page=${page}`;
-    fetch(endpoint)
-        .then(response => response.json())
-        .then(emails => {
-            const emailsTableBody = document.getElementById('emails-table').querySelector('tbody');
-            emailsTableBody.innerHTML = '';
-            if (emails.length === 0) {
-                const noDataRow = emailsTableBody.insertRow();
-                noDataRow.innerHTML = `<td colspan="13" class="text-center">No data available for this filter.</td>`;
-            } else {
-                emails.forEach(email => {
-                    const row = emailsTableBody.insertRow();
-                    row.innerHTML = `
+    function sendEmail(data) {
+        fetch('/send_email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                loadInboxPages();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    function loadInboxPages(page = 1, endpoint = `/get_all_emails_pages`) {
+        endpoint += `?page=${page}`;
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(emails => {
+                const emailsTableBody = document.getElementById('emails-table').querySelector('tbody');
+                emailsTableBody.innerHTML = '';
+                if (emails.length === 0) {
+                    const noDataRow = emailsTableBody.insertRow();
+                    noDataRow.innerHTML = `<td colspan="13" class="text-center">No data available for this filter.</td>`;
+                } else {
+                    emails.forEach(email => {
+                        const row = emailsTableBody.insertRow();
+                        row.innerHTML = `
                         <td>${email.id}</td>
                         <td>${email.from_email.substring(0, 10)}...</td>
                         <td>${email.to_email.substring(0, 10)}...</td>
@@ -184,8 +190,8 @@ function loadInboxPages(page = 1, endpoint = `/get_all_emails_pages`) {
                         <td>${Boolean(Number(email.is_handled)) ? 'Handled' : '---'}</td>
                         <td>${Boolean(Number(email.is_queued)) ? 'Queued' : '---'}</td>
                     `;
-                    row.addEventListener('click', () => {
-                        document.querySelector('#emailModal .modal-body').innerHTML = `
+                        row.addEventListener('click', () => {
+                            document.querySelector('#emailModal .modal-body').innerHTML = `
                             <p><strong style="text-decoration: underline;">ID:</strong> ${email.id}</p>
                             <p><strong style="text-decoration: underline;">From:</strong> ${email.from_email} <strong style="text-decoration: underline;">   To:</strong> ${email.to_email}</p>
                             <p><strong style="text-decoration: underline;">Status:</strong>
@@ -201,190 +207,188 @@ function loadInboxPages(page = 1, endpoint = `/get_all_emails_pages`) {
                             <p><strong style="text-decoration: underline;">Body:</strong><br> ${email.body}</p>
                             
                         `;
-                        $('#emailModal').modal('show');
+                            $('#emailModal').modal('show');
+                        });
                     });
-                });
-            }
-            if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
-        })
-        .catch(error => {
-            if(document.getElementById('loading-message')) {document.getElementById('loading-message').remove();}
-            console.error('Error:', error)
-        });
-        fetchEmailCount(page);
-}
-function applyFilters() {
-    let selectedFilter = document.querySelector('input[name="emailFilter"]:checked').value;
-    let endpoint = '/get_all_emails_pages'; // Default to all emails
-    if (selectedFilter === 'inbound') {
-        endpoint = '/get_inbound_emails_pages';
-    } else if (selectedFilter === 'outbound') {
-        endpoint = '/get_outbound_emails_pages';
-    } else if (selectedFilter === 'scammer') {
-        endpoint = '/get_scammer_emails_pages';
-    } else if (selectedFilter === 'archived') {
-        endpoint = '/get_archived_emails_pages';
-    } else if (selectedFilter === 'handled') {
-        endpoint = '/get_handled_emails_pages';
-    } else if (selectedFilter === 'queued') {
-        endpoint = '/get_queued_emails_pages';
-    }
-    loadInboxPages(page=1, endpoint=endpoint);
-}
-function escapeCSVField(field) {
-    if (typeof field !== 'string') {
-        return field; // Handle non-string fields
-    }
-    let escapedField = field.replace(/"/g, '""'); // Escape double quotes
-    escapedField = escapedField.replace(/\n/g, ' '); // Replace newline characters with space
-    if (escapedField.includes(',') || escapedField.includes('\n') || escapedField.includes('"')) {
-        escapedField = `"${escapedField}"`; // Wrap in double quotes if needed
-    }
-    return escapedField;
-}
-function downloadCSV() {
-    let selectedFilter = document.querySelector('input[name="emailFilter"]:checked').value;
-    let endpoint = '/get_all_emails';
-    let file_name = 'emails.csv';
-    if (selectedFilter === 'inbound') {
-        endpoint = '/get_inbound_emails';
-        file_name = 'inbound_emails.csv';
-    } else if (selectedFilter === 'outbound') {
-        endpoint = '/get_outbound_emails';
-        file_name = 'outbound_emails.csv';
-    } else if (selectedFilter === 'scammer') {
-        endpoint = '/get_scammer_emails';
-        file_name = 'scammer_emails.csv';
-    } else if (selectedFilter === 'archived') {
-        endpoint = '/get_archived_emails';
-        file_name = 'archived_emails.csv';
-    } else if (selectedFilter === 'handled') {
-        endpoint = '/get_handled_emails';
-        file_name = 'handled_emails.csv';
-    } else if (selectedFilter === 'queued') {
-        endpoint = '/get_queued_emails';
-        file_name = 'queued_emails.csv';
-    }    
-    fetch(endpoint)
-        .then(response => response.json())
-        .then(emails => {
-            csvContent = "id,from,to,subject,body,date,time,inbound,outbound,archived,scammer,handled,queued\n";
-            emails.forEach(email => {
-                const row = [
-                    email.id,
-                    escapeCSVField(email.from_email),
-                    escapeCSVField(email.to_email),
-                    escapeCSVField(email.subject),
-                    escapeCSVField(email.body),
-                    email.date,
-                    email.time,
-                    Boolean(Number(email.is_inbound)) ? 'In' : '---',
-                    Boolean(Number(email.is_outbound)) ? 'Out' : '---',
-                    Boolean(Number(email.is_archived)) ? 'Archived' : '---',
-                    Boolean(Number(email.is_scammer)) ? 'Scammer' : '---',
-                    Boolean(Number(email.is_handled)) ? 'Handled' : '---',
-                    Boolean(Number(email.is_queued)) ? 'Queued' : '---'
-                ].join(',');
-                csvContent += row + '\n';
+                }
+                if (document.getElementById('loading-message')) { document.getElementById('loading-message').remove(); }
+            })
+            .catch(error => {
+                if (document.getElementById('loading-message')) { document.getElementById('loading-message').remove(); }
+                console.error('Error:', error)
             });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", file_name);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        })
-        .catch(error => console.error('Error:', error));
-}
-function getDomain() {
-    fetch('/get_domain')
-    .then(response => response.json())
-    .then(data => {
-        domainName = data.domain;
-        var fromEmail = document.getElementById('fromEmail');
-        fromEmail.placeholder = `x@${data.domain}`;
-        var lblFromEmail = document.getElementById('lblFromEmail');
-        lblFromEmail.innerHTML = `Just type the username and the domain will always be @${data.domain}`;
-        return data.domain;
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-function renderPagination(currentPage, totalEmails, emailsPerPage = 100) {
-    const totalPages = Math.ceil(totalEmails / emailsPerPage);
-    const paginationUl_1 = document.getElementById('email-pagination-1');
-    paginationUl_1.innerHTML = '';
-    const maxPagesToShow = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-    if (currentPage < Math.floor(maxPagesToShow / 2)) {
-        endPage = Math.min(totalPages, maxPagesToShow);
-        startPage = 1;
-    } else if (currentPage > totalPages - Math.floor(maxPagesToShow / 2)) {
-        startPage = Math.max(1, totalPages - maxPagesToShow + 1);
+        fetchEmailCount(page);
     }
-    const addPageItem = (pageNum, text = pageNum) => {
-        const li = document.createElement('li');
-        li.className = 'page-item' + (pageNum === currentPage ? ' active' : '');
-        const a = document.createElement('a');
-        a.className = 'page-link';
-        a.href = '#';
-        a.innerText = text;
-        a.addEventListener('click', function(e) {
-            e.preventDefault();
-            loadInboxPages(pageNum);
-        });
-        li.appendChild(a);
-        paginationUl_1.appendChild(li);
-    };
-    if (currentPage > 1) {
-        addPageItem(1, 'First');
-        addPageItem(currentPage - 1, 'Previous');
+    function applyFilters() {
+        let selectedFilter = document.querySelector('input[name="emailFilter"]:checked').value;
+        let endpoint = '/get_all_emails_pages'; // Default to all emails
+        if (selectedFilter === 'inbound') {
+            endpoint = '/get_inbound_emails_pages';
+        } else if (selectedFilter === 'outbound') {
+            endpoint = '/get_outbound_emails_pages';
+        } else if (selectedFilter === 'scammer') {
+            endpoint = '/get_scammer_emails_pages';
+        } else if (selectedFilter === 'archived') {
+            endpoint = '/get_archived_emails_pages';
+        } else if (selectedFilter === 'handled') {
+            endpoint = '/get_handled_emails_pages';
+        } else if (selectedFilter === 'queued') {
+            endpoint = '/get_queued_emails_pages';
+        }
+        loadInboxPages(page = 1, endpoint = endpoint);
     }
-    if (startPage > 1) {
-        addPageItem(1);
-        if (startPage > 2) {
+    function escapeCSVField(field) {
+        if (typeof field !== 'string') {
+            return field; // Handle non-string fields
+        }
+        let escapedField = field.replace(/"/g, '""'); // Escape double quotes
+        escapedField = escapedField.replace(/\n/g, ' '); // Replace newline characters with space
+        if (escapedField.includes(',') || escapedField.includes('\n') || escapedField.includes('"')) {
+            escapedField = `"${escapedField}"`; // Wrap in double quotes if needed
+        }
+        return escapedField;
+    }
+    function downloadCSV() {
+        let selectedFilter = document.querySelector('input[name="emailFilter"]:checked').value;
+        let endpoint = '/get_all_emails';
+        let file_name = 'emails.csv';
+        if (selectedFilter === 'inbound') {
+            endpoint = '/get_inbound_emails';
+            file_name = 'inbound_emails.csv';
+        } else if (selectedFilter === 'outbound') {
+            endpoint = '/get_outbound_emails';
+            file_name = 'outbound_emails.csv';
+        } else if (selectedFilter === 'scammer') {
+            endpoint = '/get_scammer_emails';
+            file_name = 'scammer_emails.csv';
+        } else if (selectedFilter === 'archived') {
+            endpoint = '/get_archived_emails';
+            file_name = 'archived_emails.csv';
+        } else if (selectedFilter === 'handled') {
+            endpoint = '/get_handled_emails';
+            file_name = 'handled_emails.csv';
+        } else if (selectedFilter === 'queued') {
+            endpoint = '/get_queued_emails';
+            file_name = 'queued_emails.csv';
+        }
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(emails => {
+                csvContent = "id,from,to,subject,body,date,time,inbound,outbound,archived,scammer,handled,queued\n";
+                emails.forEach(email => {
+                    const row = [
+                        email.id,
+                        escapeCSVField(email.from_email),
+                        escapeCSVField(email.to_email),
+                        escapeCSVField(email.subject),
+                        escapeCSVField(email.body),
+                        email.date,
+                        email.time,
+                        Boolean(Number(email.is_inbound)) ? 'In' : '---',
+                        Boolean(Number(email.is_outbound)) ? 'Out' : '---',
+                        Boolean(Number(email.is_archived)) ? 'Archived' : '---',
+                        Boolean(Number(email.is_scammer)) ? 'Scammer' : '---',
+                        Boolean(Number(email.is_handled)) ? 'Handled' : '---',
+                        Boolean(Number(email.is_queued)) ? 'Queued' : '---'
+                    ].join(',');
+                    csvContent += row + '\n';
+                });
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", file_name);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    function getDomain() {
+        fetch('/get_domain')
+            .then(response => response.json())
+            .then(data => {
+                domainName = data.domain;
+                var fromEmail = document.getElementById('fromEmail');
+                fromEmail.placeholder = `x@${data.domain}`;
+                var lblFromEmail = document.getElementById('lblFromEmail');
+                lblFromEmail.innerHTML = `Just type the username and the domain will always be @${data.domain}`;
+                return data.domain;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    function renderPagination(currentPage, totalEmails, emailsPerPage = 100) {
+        const totalPages = Math.ceil(totalEmails / emailsPerPage);
+        const paginationUl_1 = document.getElementById('email-pagination-1');
+        paginationUl_1.innerHTML = '';
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        if (currentPage < Math.floor(maxPagesToShow / 2)) {
+            endPage = Math.min(totalPages, maxPagesToShow);
+            startPage = 1;
+        } else if (currentPage > totalPages - Math.floor(maxPagesToShow / 2)) {
+            startPage = Math.max(1, totalPages - maxPagesToShow + 1);
+        }
+        const addPageItem = (pageNum, text = pageNum) => {
             const li = document.createElement('li');
-            li.className = 'page-item disabled';
-            const span = document.createElement('span');
-            span.className = 'page-link';
-            span.innerHTML = '...';
-            li.appendChild(span);
+            li.className = 'page-item' + (pageNum === currentPage ? ' active' : '');
+            const a = document.createElement('a');
+            a.className = 'page-link';
+            a.href = '#';
+            a.innerText = text;
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                loadInboxPages(pageNum);
+            });
+            li.appendChild(a);
             paginationUl_1.appendChild(li);
+        };
+        if (currentPage > 1) {
+            addPageItem(1, 'First');
+            addPageItem(currentPage - 1, 'Previous');
+        }
+        if (startPage > 1) {
+            addPageItem(1);
+            if (startPage > 2) {
+                const li = document.createElement('li');
+                li.className = 'page-item disabled';
+                const span = document.createElement('span');
+                span.className = 'page-link';
+                span.innerHTML = '...';
+                li.appendChild(span);
+                paginationUl_1.appendChild(li);
+            }
+        }
+        for (let i = startPage; i <= endPage; i++) {
+            addPageItem(i);
+        }
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const li = document.createElement('li');
+                li.className = 'page-item disabled';
+                const span = document.createElement('span');
+                span.className = 'page-link';
+                span.innerHTML = '...';
+                li.appendChild(span);
+                paginationUl_1.appendChild(li);
+            }
+            addPageItem(totalPages);
+        }
+        if (currentPage < totalPages) {
+            addPageItem(currentPage + 1, 'Next');
+            addPageItem(totalPages, 'Last');
         }
     }
-    for (let i = startPage; i <= endPage; i++) {
-        addPageItem(i);
+    function fetchEmailCount(currentPage = 1) {
+        fetch('/get_email_count')
+            .then(response => response.json())
+            .then(data => {
+                const totalEmails = data.total_emails;
+                renderPagination(currentPage, totalEmails);
+            })
+            .catch(error => console.error('Error:', error));
     }
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            const li = document.createElement('li');
-            li.className = 'page-item disabled';
-            const span = document.createElement('span');
-            span.className = 'page-link';
-            span.innerHTML = '...';
-            li.appendChild(span);
-            paginationUl_1.appendChild(li);
-        }
-        addPageItem(totalPages);
-    }
-    if (currentPage < totalPages) {
-        addPageItem(currentPage + 1, 'Next');
-        addPageItem(totalPages, 'Last');
-    }
-}
-
-function fetchEmailCount(currentPage = 1) {
-    fetch('/get_email_count')
-        .then(response => response.json())
-        .then(data => {
-            const totalEmails = data.total_emails;
-            renderPagination(currentPage, totalEmails);
-        })
-        .catch(error => console.error('Error:', error));
-}
 </script>
 {% endblock %}

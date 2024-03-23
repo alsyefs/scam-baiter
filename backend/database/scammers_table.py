@@ -91,8 +91,9 @@ class ScammersDatabaseManager:
             cursor.execute('''
                 UPDATE scammers SET scammer_email_summary_context = ?
                 WHERE scammer_email_address = ? AND baiter_email_address = ? AND baiter_username = ? AND baiter_email_strategy = ?
-            ''', (scammer_email_address, scammer_email_summary_context, baiter_email_address, baiter_username, baiter_email_strategy))
+            ''', (scammer_email_summary_context, scammer_email_address, baiter_email_address, baiter_username, baiter_email_strategy))
             conn.commit()
+            log.info(f"(database) Scammer updated for: ({scammer_email_address}) with new summary context: ({scammer_email_summary_context}).")
         except Exception as e:
             log.error(f"Error updating scammer: {e}")
             raise

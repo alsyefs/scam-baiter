@@ -45,7 +45,7 @@ DEFAULT_USER_USERNAME = DEFAULT_USER_USERNAME
 DEFAULT_USER_PASSWORD = DEFAULT_USER_PASSWORD
 
 # MAIL handling
-MAX_EMAILS_TO_HANDLE = 20  # number of replies per cron run
+MAX_EMAILS_TO_HANDLE = 24  # number of replies per cron run
 EMAILS_DIRECTORY = os.path.join(BASE_DIR, "emails")  # root directory for all emails
 MAIL_QUEUED_DIR = os.path.join(BASE_DIR, "emails", "queued")  # crawled and received emails
 MAIL_ARCHIVE_DIR = os.path.join(BASE_DIR, "emails", "archive")  # archive
@@ -62,6 +62,7 @@ MAILGUN_TARGET_EMAIL_TEST = MAILGUN_TARGET_EMAIL_TEST  # Email for testing to be
 EMAIL_ARCHIVED_CLEANED_DIR = os.path.join(BASE_DIR, "emails", "archive_cleaned")
 EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations")
 EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_MOST_CONVERSATIONS = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations_most_conversations")
+EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LEAST_CONVERSATIONS = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations_least_conversations")
 EMAIL_ARCHIVED_CLEANED_CONVERSATIONS_DIR_LONGEST_CONVERSATIONS = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations_longest_conversations")
 EMAILS_REPORT_DIR = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations_report")
 UNIQUE_EMAIL_QUEUED = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations_report", "emails_queued.txt")

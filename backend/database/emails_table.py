@@ -467,8 +467,8 @@ class EmailsDatabaseManager:
                 email_date, email_time = email
                 email_timestamp = datetime.strptime(f"{email_date} {email_time}", "%Y-%m-%d %H:%M:%S.%f")
                 current_timestamp = datetime.now()
-                if (current_timestamp - email_timestamp) > timedelta(minutes=1):  # Check if the email is newer than 1 minute
-                    return False  # If the email is older than 1 minute, it's considered not a duplicate
+                if (current_timestamp - email_timestamp) > timedelta(minutes=2):  # Check if the email is newer than 1 minute
+                    return False  # If the email is older than 2 minute, it's considered not a duplicate
                 return True  # If within the last minute, it's a duplicate
             return False  # If no email was found, it's not a duplicate
         except Exception as e:

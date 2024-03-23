@@ -93,6 +93,7 @@ def signup():
     try:
         if request.method == "POST":
             username = request.form.get('username')
+            username = username.lower()
             password = request.form.get('password')
             confirm_password = request.form.get('confirm_password')
             if not re.match(r"[^@]+@bristol\.ac\.uk$", username):
@@ -139,7 +140,7 @@ def logout():
     return redirect(url_for('index'))
 
 @users_bp.route('/update_role', methods=['POST'])
-@requires_roles('admin', 'super admin')
+@requires_roles('super admin')
 def update_role():
     try:
         user_id = request.form.get('user_id')
@@ -165,7 +166,7 @@ def update_role():
         return redirect(url_for('users.users'))
 
 @users_bp.route('/roles')
-@requires_roles('admin', 'super_admin')
+@requires_roles('super_admin')
 def list_roles():
     try:
         all_roles = Role.query.all()
@@ -211,7 +212,7 @@ def change_password():
 
 
 @users_bp.route('/clear_password', methods=['POST'])
-@requires_roles('admin', 'super admin')
+@requires_roles('super admin')
 def clear_password():
     try:
         user_id = request.form.get('user_id')

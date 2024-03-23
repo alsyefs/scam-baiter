@@ -37,18 +37,8 @@ def datetime_converter(o):
     if isinstance(o, datetime):
         return o.__str__()
     
-# @settings_bp.route('/settings')
-# @requires_roles('super admin', 'admin')
-# def index():
-#     user_roles = []
-#     if 'username' in session:
-#         user = User.query.filter_by(username=session['username']).first()
-#         if user:
-#             user_roles = [role.name for role in user.roles]
-#     return render_template('settings.html', user_roles=user_roles)
-    
 @settings_bp.route('/settings')
-@requires_roles('super admin', 'admin')
+@requires_roles('super admin')
 def index():
     user_roles = []
     cron_state = 'unknown'  # Default value
@@ -67,16 +57,15 @@ def index():
 
 
 @settings_bp.route('/get_settings')
-@requires_roles('super admin', 'admin')
+@requires_roles('super admin')
 def get_settings():
     try:
         settings = SettingsDatabaseManager.get_settings()
         return jsonify([dict(setting) for setting in settings])
     except Exception as e:
-        log.error("An error occurred: %s", str(e))
-        log.error("", traceback.format_exc())
+        log.error(f"An error occurred: {str(e)}. Traceback: {traceback.format_exc()}")
 @settings_bp.route('/update_cron_state', methods=['POST'])
-@requires_roles('super admin', 'admin')
+@requires_roles('super admin')
 def update_cron_state():
     try:
         data = request.get_json()
@@ -85,10 +74,9 @@ def update_cron_state():
         run_scheduler()
         return jsonify({'message': 'cron state updated successfully'})
     except Exception as e:
-        log.error("An error occurred: %s", str(e))
-        log.error("", traceback.format_exc())
+        log.error(f"An error occurred: {str(e)}. Traceback: {traceback.format_exc()}")
 @settings_bp.route('/get_cron_state')
-@requires_roles('super admin', 'admin')
+@requires_roles('super admin', 'admin', 'user', 'guest')
 def get_cron_state():
     try:
         cron_state_rows = SettingsDatabaseManager.get_cron_state()
@@ -98,6 +86,5 @@ def get_cron_state():
         else:
             return jsonify({'cron_state': 'unknown'})
     except Exception as e:
-        log.error("An error occurred: %s", str(e))
-        log.error("", traceback.format_exc())
+        log.error(f"An error occurred: {str(e)}. Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'An error occurred while fetching cron state'})
