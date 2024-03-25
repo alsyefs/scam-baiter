@@ -27,9 +27,9 @@ from database.scammers_table import ScammersDatabaseManager
 mymodel = GPT_MODEL
 def main(crawl=True):
     log.info(f"Starting cron job with crawling {'enabled' if crawl else 'disabled'}")
-    # if crawl:
-    #     crawler.fetch_all()
-    #     log.info("Crawling done")
+    if crawl:
+        crawler.fetch_all()
+        log.info("Crawling done")
     email_filenames = os.listdir(MAIL_QUEUED_DIR)
     count = 0
     log.info(f"Handling {len(email_filenames)} emails")
