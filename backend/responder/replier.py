@@ -39,15 +39,6 @@ class Replier(ABC):
             log.error(f"Error in get_reply: {e}")
             return ""
 
-    # def get_reply_by_his(self, addr):
-    #     try:
-    #         with open(os.path.join(MAIL_ARCHIVE_DIR, addr + ".his"), "r", encoding="utf8") as f:
-    #             content = f.read()
-    #         return self.get_reply(content + "\n[bait_start]\n")
-    #     except Exception as e:
-    #         log.error(f"Error in get_reply_by_his: {e}")
-    #         return ""
-
 class ChatReplier1(Replier):
     name = "Chat1"
     def _gen_text(self,prompt, old_summary_context="") -> str:

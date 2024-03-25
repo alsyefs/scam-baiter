@@ -45,7 +45,7 @@ DEFAULT_USER_USERNAME = DEFAULT_USER_USERNAME
 DEFAULT_USER_PASSWORD = DEFAULT_USER_PASSWORD
 
 # MAIL handling
-MAX_EMAILS_TO_HANDLE = 24  # number of replies per cron run
+MAX_EMAILS_TO_HANDLE = 6  # number of replies per cron run
 EMAILS_DIRECTORY = os.path.join(BASE_DIR, "emails")  # root directory for all emails
 MAIL_QUEUED_DIR = os.path.join(BASE_DIR, "emails", "queued")  # crawled and received emails
 MAIL_ARCHIVE_DIR = os.path.join(BASE_DIR, "emails", "archive")  # archive
@@ -70,6 +70,7 @@ UNIQUE_EMAIL_QUEUED_DUPLICATE = os.path.join(BASE_DIR, "emails", "archive_cleane
 EMAIL_ARCHIVED_REPORT = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations_report", "complete_report.txt")
 EMAIL_CONVERSATIONS_REPORT_CSV = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations_report", "email_conversations_report.csv")
 EMAIL_CONVERSATIONS_SUMMARY_REPORT_CSV = os.path.join(BASE_DIR, "emails", "archive_cleaned_conversations_report", "email_conversations_summary_report.csv")
+INVALID_EMAIL_LIST = os.path.join(BASE_DIR, "emails", "invalid_emails.json")
 
 # Text-to-speech handling
 TTS_MP3_PATH = os.path.join(BASE_DIR, 'data', 'audio_files', "tts.mp3")  # text-to-speech mp3 file
@@ -106,7 +107,7 @@ OLD_COVERSATIONS_CSV = os.path.join(BASE_DIR, "data", "old_conversations.csv")
 # Crawling handling
 CRAWLER_PROG_DIR = os.path.join(BASE_DIR, "cache")  # has crawled cache
 MAX_PAGE_SL = 2  # max page for scammer list
-MAX_PAGE_SS = 100  # max page for scammer sites
+MAX_PAGE_SS = 3  # max page for scammer sites
 
 # MAILGUN (For sending and receiving emails)
 MAILGUN_API_KEY = MAILGUN_API_KEY

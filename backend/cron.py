@@ -11,7 +11,9 @@ import sys
 import traceback
 import atexit
 import signal
-from globals import MAIL_QUEUED_DIR, MAIL_HANDLED_DIR, MAX_TOKENS, GPT_MODEL, MAX_EMAILS_TO_HANDLE, EMAILS_DIRECTORY
+from globals import (MAIL_QUEUED_DIR, MAIL_HANDLED_DIR, MAX_TOKENS, GPT_MODEL,
+                     MAX_EMAILS_TO_HANDLE, EMAILS_DIRECTORY,
+                     INVALID_EMAIL_LIST)
 import tiktoken
 import emailing_service
 import responder
@@ -52,6 +54,10 @@ def main(crawl=True):
                 if not subject.startswith("Re:"):
                     subject = "Re: " + subject
                 scam_email = email_obj["from"]
+                if not valid_email_deliverability(scam_email):
+                        log.info(f"Scammer email {scam_email} is not deliverable. Skipping this email.")
+                        os.remove(email_path)
+                        continue
                 if "bait_email" not in email_obj:
                     if solution_manager.scam_exists(scam_email):
                         log.info("This crawled email has been replied to. Ignored")
@@ -101,6 +107,13 @@ def main(crawl=True):
                 log.error(f"Error in cron job: {e}. Traceback: {traceback.format_exc()}")
         else:
             break
+def valid_email_deliverability(email=""):
+    with open(INVALID_EMAIL_LIST, 'r') as file:
+        data = json.load(file)
+        for entry in data:
+            if email == entry['address'] and entry['result'] != 'deliverable':
+                return False
+    return True
 def store_sent_email_database(email_from, email_to, email_subject, email_body):
     try:
         EmailsDatabaseManager.insert_email(

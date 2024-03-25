@@ -41,6 +41,7 @@ from backend.endpoints.logs import logs_bp
 from backend.endpoints.old_conversations import old_conversations_bp
 from backend.cron_scheduler import run_scheduler
 from backend.solution_manager.storer import get_all_stored_info
+import json
 import nest_asyncio
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
@@ -221,6 +222,7 @@ def update_context_from_record_json_database():
         print("updated all summary contexts.")
     except Exception as e:
         log.error(f"Error while updating context from record json: {e}")
+
 if __name__ == "__main__":
     # recreate_log_tables() # run this to clear all logs tables
     # clear_everything() # run this to clear everything
