@@ -29,6 +29,8 @@ from backend.database.users_table import UsersDatabaseManager
 from backend.database.roles_table import RolesDatabaseManager
 from backend.database.old_conversations import OldConversationsDatabaseManager
 from backend.database.settings_table import SettingsDatabaseManager
+from backend.database.emails_table import EmailsDatabaseManager
+from backend.database.scammers_table import ScammersDatabaseManager
 from backend.endpoints.users import users_bp
 from backend.endpoints.roles import roles_bp
 from backend.endpoints.settings import settings_bp
@@ -38,6 +40,7 @@ from backend.endpoints.twilio import twilio_bp
 from backend.endpoints.logs import logs_bp
 from backend.endpoints.old_conversations import old_conversations_bp
 from backend.cron_scheduler import run_scheduler
+from backend.solution_manager.storer import get_all_stored_info
 import nest_asyncio
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
@@ -205,10 +208,24 @@ def initialize_app():
 def apply_caching(response):
     response.headers["ngrok-skip-browser-warning"] = "true"
     return response
-
+def mark_is_handled_if_sent():  # To fix the issue of emails not being marked as handled after being sent.
+    try:
+        EmailsDatabaseManager.mark_email_as_handled_by_email_id() # Mark all email as handled if sent.
+    except Exception as e:
+        log.error(f"Error while marking email as handled: {e}")
+def update_context_from_record_json_database():
+    try:
+        all_stored_info = get_all_stored_info()
+        for info in all_stored_info:
+            ScammersDatabaseManager.update_scammer_summary_context(info['to'], info['summary_context'], info['addr'], info['username'], info['strategy'])
+        print("updated all summary contexts.")
+    except Exception as e:
+        log.error(f"Error while updating context from record json: {e}")
 if __name__ == "__main__":
     # recreate_log_tables() # run this to clear all logs tables
     # clear_everything() # run this to clear everything
     run_scheduler() # run this to start the scheduler in the background
     initialize_app()
+    # mark_is_handled_if_sent()
+    # update_context_from_record_json_database()
     app.run(host="0.0.0.0", port=HTTP_SERVER_PORT, debug=True)

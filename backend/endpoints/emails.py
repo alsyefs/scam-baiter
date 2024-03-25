@@ -114,6 +114,30 @@ def get_all_emails_pages():
 def get_email_count():
     total_emails = EmailsDatabaseManager.get_email_count()
     return jsonify({'total_emails': total_emails}), 200
+@emails_bp.route('/get_email_count_inbound')
+def get_email_count_inbound():
+    total_emails = EmailsDatabaseManager.get_email_count_inbound()
+    return jsonify({'total_emails': total_emails}), 200
+@emails_bp.route('/get_email_count_outbound')
+def get_email_count_outbound():
+    total_emails = EmailsDatabaseManager.get_email_count_outbound()
+    return jsonify({'total_emails': total_emails}), 200
+@emails_bp.route('/get_email_count_archived')
+def get_email_count_archived():
+    total_emails = EmailsDatabaseManager.get_email_count_archived()
+    return jsonify({'total_emails': total_emails}), 200
+@emails_bp.route('/get_email_count_scammer')
+def get_email_count_scammer():
+    total_emails = EmailsDatabaseManager.get_email_count_scammer()
+    return jsonify({'total_emails': total_emails}), 200
+@emails_bp.route('/get_email_count_handled')
+def get_email_count_handled():
+    total_emails = EmailsDatabaseManager.get_email_count_handled()
+    return jsonify({'total_emails': total_emails}), 200
+@emails_bp.route('/get_email_count_queued')
+def get_email_count_queued():
+    total_emails = EmailsDatabaseManager.get_email_count_queued()
+    return jsonify({'total_emails': total_emails}), 200
 
 
 @emails_bp.route('/get_inbound_emails')

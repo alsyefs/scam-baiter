@@ -94,7 +94,9 @@ function loadLogsPages(page=1) {
     });
     fetchLogsCount(page);
 }
-
+function escapeHTML(text) {
+    return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 function populateTable(logs) {
     var logTableBody = document.getElementById('log-table-body');
     logTableBody.innerHTML = '';
@@ -117,7 +119,7 @@ function populateTable(logs) {
                     <p><strong style="text-decoration: underline;">ID:</strong> ${log.id}</p>
                     <p><strong style="text-decoration: underline;">Log level:</strong> ${log.level} --- <strong style="text-decoration: underline;">Date:</strong> ${log.date}  --- <strong style="text-decoration: underline;">Time:</strong> ${log.time}</p>
                     <p><strong style="text-decoration: underline;">File:</strong> ${log.file_name}</p>
-                    <p><strong style="text-decoration: underline;">Log message:</strong><br> ${log.message}</p>
+                    <p><strong style="text-decoration: underline;">Log message:</strong><br> ${escapeHTML(log.message)}</p>
                 `;
                 $('#logModal').modal('show');
             });

@@ -61,6 +61,8 @@ class EmailsDatabaseManager:
         finally:
             if conn:
                 conn.close()
+    
+    ######################## START: Insert data ###############################
     @staticmethod
     def insert_email(from_email, to_email, subject, body, is_inbound, is_outbound, is_archived=0, is_handled=0, is_queued=0, is_scammer=0, replied_from=''):
         now = datetime.now()
@@ -91,21 +93,9 @@ class EmailsDatabaseManager:
         finally:
             if conn:
                 conn.close()
-    @staticmethod
-    def get_emails():
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email order by id desc")
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting emails: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
+    ######################## END:   Insert data ###############################
+
+    ######################## START: Get data pages ############################
     @staticmethod
     def get_emails_pages(page=PAGE_START, per_page=100):
         conn = None
@@ -119,127 +109,6 @@ class EmailsDatabaseManager:
             return emails
         except Exception as e:
             log.error(f"Error getting emails: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_email_count():
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            query = "SELECT COUNT(*) FROM email"
-            cursor.execute(query)
-            count = cursor.fetchone()[0]
-            return count
-        except Exception as e:
-            log.error(f"Error counting emails: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_email_by_id(email_id):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE id=? order by id desc", (email_id,))
-            email = cursor.fetchone()
-            return email
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_email_by_email_address(email_address):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE from_email LIKE '%' || ? || '%' OR to_email LIKE '%' || ? || '%' order by id desc", (email_address, email_address))
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_email_by_subject(subject):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE subject LIKE '%' || ? || '%' order by id desc", (subject,))
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_email_by_body(body):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE body LIKE '%' || ? || '%' order by id desc", (body,))
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_emails_by_date(date):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE date=? order by id desc", (date,))
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_emails_by_time(time):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE time=? order by id desc", (time,))
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_inbound_emails():
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE is_inbound=1 and to_email not like 'CRAWLER' order by id desc")
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
             raise
         finally:
             if conn:
@@ -262,21 +131,6 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_outbound_emails():
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE is_outbound=1 order by id desc")
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting sent emails: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
     def get_outbound_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
@@ -289,21 +143,6 @@ class EmailsDatabaseManager:
             return emails
         except Exception as e:
             log.error(f"Error getting emails: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_archived_emails():
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE is_archived=1 order by id desc")
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
             raise
         finally:
             if conn:
@@ -326,21 +165,6 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_handled_emails():
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE is_handled=1 order by id desc")
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
     def get_handled_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
@@ -353,21 +177,6 @@ class EmailsDatabaseManager:
             return emails
         except Exception as e:
             log.error(f"Error getting emails: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
-    def get_queued_emails():
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE is_queued=1 order by id desc")
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
             raise
         finally:
             if conn:
@@ -390,21 +199,6 @@ class EmailsDatabaseManager:
             if conn:
                 conn.close()
     @staticmethod
-    def get_scammer_emails():
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE is_scammer=1 order by id desc")
-            emails = cursor.fetchall()
-            return emails
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-    @staticmethod
     def get_scammer_emails_pages(page=PAGE_START, per_page=100):
         conn = None
         try:
@@ -421,80 +215,30 @@ class EmailsDatabaseManager:
         finally:
             if conn:
                 conn.close()
+    ######################## END:   Get data pages ############################
+    
+    ######################## START: Update data ###############################
     @staticmethod
-    def get_email_by_replied_from(replied_from):
+    def mark_email_as_handled_by_email_id():
+        sql_query = '''
+            UPDATE email
+            SET is_handled=1
+            WHERE is_outbound=1
+        '''
         conn = None
         try:
             conn = EmailsDatabaseManager.get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM email WHERE replied_from=? order by id desc", (replied_from,))
-            emails = cursor.fetchall()
-            return emails
+            cursor.execute(sql_query)
+            conn.commit()
         except Exception as e:
-            log.error(f"Error getting email: {e}")
+            if conn:
+                conn.rollback()
+            log.error(f"Error marking email as handled: {e}. Failed Query: {sql_query}")
             raise
         finally:
             if conn:
                 conn.close()
-    @staticmethod
-    def get_email_id_by_email_address_and_subject_and_body(from_email, to_email, subject, body):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT id FROM email WHERE from_email=? AND to_email=? AND subject=? AND body=? ORDER BY id DESC", (from_email, to_email, subject, body))
-            row = cursor.fetchone()
-            if row is not None:
-                email_id = row[0]
-                return email_id
-            return None
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
-    @staticmethod
-    def email_exists(from_email, to_email, subject, body):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("""SELECT date, time FROM email WHERE from_email=? AND to_email=? AND subject=? AND body=? ORDER BY id DESC LIMIT 1""", (from_email, to_email, subject, body))
-            email = cursor.fetchone()
-            if email is not None:
-                email_date, email_time = email
-                email_timestamp = datetime.strptime(f"{email_date} {email_time}", "%Y-%m-%d %H:%M:%S.%f")
-                current_timestamp = datetime.now()
-                if (current_timestamp - email_timestamp) > timedelta(minutes=2):  # Check if the email is newer than 1 minute
-                    return False  # If the email is older than 2 minute, it's considered not a duplicate
-                return True  # If within the last minute, it's a duplicate
-            return False  # If no email was found, it's not a duplicate
-        except Exception as e:
-            log.error(f"Error getting email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
-    @staticmethod
-    def get_last_email_by_email_address(from_email):
-        conn = None
-        try:
-            conn = EmailsDatabaseManager.get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT body FROM email WHERE from_email=? order by id desc", (from_email,))
-            email = cursor.fetchone()
-            log.info(f"Last email: {email}")
-            return email
-        except Exception as e:
-            log.error(f"Error getting last email: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
     @staticmethod
     def update_email_by_id(email_id, from_email, to_email, subject, body, is_inbound, is_outbound, is_archived, is_handled, is_queued, date, time, is_scammer, replied_from):
         sql_query = '''
@@ -553,7 +297,6 @@ class EmailsDatabaseManager:
         finally:
             if conn:
                 conn.close()
-
     @staticmethod
     def set_email_handled_by_email_id(email_id):
         sql_query = '''
@@ -664,6 +407,390 @@ class EmailsDatabaseManager:
         finally:
             if conn:
                 conn.close()
+    ######################## END:   Update data ###############################
+    
+    ######################## START: Get counts ################################
+    @staticmethod
+    def get_email_count():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM email"
+            cursor.execute(query)
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log.error(f"Error counting emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_count_inbound():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM email WHERE is_inbound=1 and to_email not like 'CRAWLER'"
+            cursor.execute(query)
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log.error(f"Error counting inbound emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_count_outbound():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM email WHERE is_outbound=1"
+            cursor.execute(query)
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log.error(f"Error counting outbound emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_count_archived():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM email WHERE is_archived=1"
+            cursor.execute(query)
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log.error(f"Error counting archived emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_count_scammer():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM email WHERE is_scammer=1"
+            cursor.execute(query)
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log.error(f"Error counting scammer emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_count_handled():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM email WHERE is_handled=1"
+            cursor.execute(query)
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log.error(f"Error counting handled emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_count_queued():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM email WHERE is_queued=1"
+            cursor.execute(query)
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log.error(f"Error counting queued emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    ######################## END:   Get counts ################################
+                
+    ######################## START: Get data (no pagination) ##################
+    @staticmethod
+    def get_emails():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email order by id desc")
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_by_id(email_id):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE id=? order by id desc", (email_id,))
+            email = cursor.fetchone()
+            return email
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_by_email_address(email_address):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE from_email LIKE '%' || ? || '%' OR to_email LIKE '%' || ? || '%' order by id desc", (email_address, email_address))
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_by_subject(subject):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE subject LIKE '%' || ? || '%' order by id desc", (subject,))
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_by_body(body):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE body LIKE '%' || ? || '%' order by id desc", (body,))
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_emails_by_date(date):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE date=? order by id desc", (date,))
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_emails_by_time(time):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE time=? order by id desc", (time,))
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_inbound_emails():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE is_inbound=1 and to_email not like 'CRAWLER' order by id desc")
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_outbound_emails():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE is_outbound=1 order by id desc")
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting sent emails: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_archived_emails():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE is_archived=1 order by id desc")
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_handled_emails():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE is_handled=1 order by id desc")
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_queued_emails():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE is_queued=1 order by id desc")
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_scammer_emails():
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE is_scammer=1 order by id desc")
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_by_replied_from(replied_from):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM email WHERE replied_from=? order by id desc", (replied_from,))
+            emails = cursor.fetchall()
+            return emails
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_email_id_by_email_address_and_subject_and_body(from_email, to_email, subject, body):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM email WHERE from_email=? AND to_email=? AND subject=? AND body=? ORDER BY id DESC", (from_email, to_email, subject, body))
+            row = cursor.fetchone()
+            if row is not None:
+                email_id = row[0]
+                return email_id
+            return None
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def email_exists(from_email, to_email, subject, body):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""SELECT date, time FROM email WHERE from_email=? AND to_email=? AND subject=? AND body=? ORDER BY id DESC LIMIT 1""", (from_email, to_email, subject, body))
+            email = cursor.fetchone()
+            if email is not None:
+                email_date, email_time = email
+                email_timestamp = datetime.strptime(f"{email_date} {email_time}", "%Y-%m-%d %H:%M:%S.%f")
+                current_timestamp = datetime.now()
+                if (current_timestamp - email_timestamp) > timedelta(minutes=2):  # Check if the email is newer than 1 minute
+                    return False  # If the email is older than 2 minute, it's considered not a duplicate
+                return True  # If within the last minute, it's a duplicate
+            return False  # If no email was found, it's not a duplicate
+        except Exception as e:
+            log.error(f"Error getting email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+    @staticmethod
+    def get_last_email_by_email_address(from_email):
+        conn = None
+        try:
+            conn = EmailsDatabaseManager.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT body FROM email WHERE from_email=? order by id desc", (from_email,))
+            email = cursor.fetchone()
+            log.info(f"Last email: {email}")
+            return email
+        except Exception as e:
+            log.error(f"Error getting last email: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
     @staticmethod
     def is_scammer_inbound_or_outbound_by_email_address(email_address):
         conn = None
@@ -711,3 +838,4 @@ class EmailsDatabaseManager:
         finally:
             if conn:
                 conn.close()
+    ######################## END: Get data (no pagination) ####################

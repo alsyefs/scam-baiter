@@ -83,6 +83,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadGPTsPages();
     fetchGPTCount();
 });
+function escapeHTML(text) {
+    return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 function loadGPTsPages(page = 1, endpoint = `/select_all_gpt_interactions_pages`) {
     endpoint += `?page=${page}`;
     fetch(endpoint)
@@ -115,9 +118,9 @@ function loadGPTsPages(page = 1, endpoint = `/select_all_gpt_interactions_pages`
                         document.querySelector('#gptModal .modal-body').innerHTML = `
                             <p><strong style="text-decoration: underline;">ID:</strong> ${gpt.id}</p>
                             <p><strong style="text-decoration: underline;">Model:</strong> ${gpt.model} (${gpt.submission_datetime})</p>
-                            <p><strong style="text-decoration: underline;">Instructions:</strong><br> ${gpt.instructions}</p>
-                            <p><strong style="text-decoration: underline;">Prompt:</strong><br> ${gpt.prompt}</p>
-                            <p><strong style="text-decoration: underline;">Generated Text:</strong><br> ${gpt.generated_text}</p>
+                            <p><strong style="text-decoration: underline;">Instructions:</strong><br> ${escapeHTML(gpt.instructions)}</p>
+                            <p><strong style="text-decoration: underline;">Prompt:</strong><br> ${escapeHTML(gpt.prompt)}</p>
+                            <p><strong style="text-decoration: underline;">Generated Text:</strong><br> ${escapeHTML(gpt.generated_text)}</p>
                             <p><br>------------<br></p>
                             <p><strong style="text-decoration: underline;">Temperature:</strong> ${gpt.temperature}
                                 --- <strong style="text-decoration: underline;">Max Length:</strong> ${gpt.max_length}

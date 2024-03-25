@@ -29,72 +29,73 @@
     </form>
     {% endif %}
 
-    <!-- Email Table -->
-    <h3>Inbox</h3>
     <!-- Filter Section -->
     <div class="filter-section d-flex align-items-center">
-        <h4>Filters</h4>
+        <h4>Filter emails by:</h4>
         <div class="form-check">
             <input class="form-check-input" type="radio" name="emailFilter" id="filterAll" value="all" checked>
-            <label class="form-check-label" for="filterAll">All</label>
+            <label class="form-check-label" for="filterAll">All <span class="badge bg-secondary" id="all-count"></span></label>
         </div>
         <div class="form-check">
             <input class="form-check-input" type="radio" name="emailFilter" id="filterInbound" value="inbound">
-            <label class="form-check-label" for="filterInbound">Inbound</label>
+            <label class="form-check-label" for="filterInbound">Inbound <span class="badge bg-secondary" id="inbound-count"></span></label>
         </div>
         <div class="form-check">
             <input class="form-check-input" type="radio" name="emailFilter" id="filterOutbound" value="outbound">
-            <label class="form-check-label" for="filterOutbound">Outbound</label>
+            <label class="form-check-label" for="filterOutbound">Outbound <span class="badge bg-secondary" id="outbound-count"></span></label>
         </div>
         <div class="form-check">
             <input class="form-check-input" type="radio" name="emailFilter" id="filterScammer" value="scammer">
-            <label class="form-check-label" for="filterScammer">Scammer</label>
+            <label class="form-check-label" for="filterScammer">Scammer <span class="badge bg-secondary" id="scammer-count"></span></label>
         </div>
         <div class="form-check">
             <input class="form-check-input" type="radio" name="emailFilter" id="filterArchived" value="archived">
-            <label class="form-check-label" for="filterArchived">Archived</label>
+            <label class="form-check-label" for="filterArchived">Archived <span class="badge bg-secondary" id="archived-count"></span></label>
         </div>
-
         <div class="form-check">
             <input class="form-check-input" type="radio" name="emailFilter" id="filterHandled" value="handled">
-            <label class="form-check-label" for="filterHandled">Handled</label>
+            <label class="form-check-label" for="filterHandled">Handled <span class="badge bg-secondary" id="handled-count"></span></label>
         </div>
         <div class="form-check">
             <input class="form-check-input" type="radio" name="emailFilter" id="filterQueued" value="queued">
-            <label class="form-check-label" for="filterQueued">Queued</label>
+            <label class="form-check-label" for="filterQueued">Queued <span class="badge bg-secondary" id="queued-count"></span></label>
         </div>
         <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
         <button class="btn btn-secondary" onclick="downloadCSV()">Download as CSV</button>
     </div>
-
-    <table class="table table-striped" id="emails-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Subject</th>
-                <th>Body</th>
-                <th>Date</th>
-                <th>time</th>
-                <th>Inbound?</th>
-                <th>Outbound?</th>
-                <th>Archived?</th>
-                <th>Scammer?</th>
-                <th>Handled?</th>
-                <th>Queued?</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr id="loading-message">
-                <td colspan="13" class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- Email Table -->
+    <h3>Emails</h3>
+    <div class="table-responsive">
+        <table class="table table-striped" id="emails-table">
+            <thead>
+                <tr>
+                    <th># in page</th>
+                    <th>ID</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Subject</th>
+                    <th>Body</th>
+                    <th>Date</th>
+                    <th>time</th>
+                    <th>Inbound?</th>
+                    <th>Outbound?</th>
+                    <th>Archived?</th>
+                    <th>Scammer?</th>
+                    <th>Handled?</th>
+                    <th>Queued?</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="loading-message">
+                    <td colspan="13" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <nav aria-label="Email pagination 1">
         <ul class="pagination justify-content-center" id="email-pagination-1"></ul>
     </nav>
@@ -122,6 +123,7 @@
 </div>
 
 <script>
+    let currentFilter = 'all'; // Default filter
     document.addEventListener('DOMContentLoaded', function () {
         try{
             domainName = getDomain();
@@ -140,8 +142,9 @@
                 sendEmail(data);
             });
             }
-            loadInboxPages();
+            fetchInitialCounts();
             fetchEmailCount();
+            updateEndpointAndLoad(currentFilter);
         } catch (error) {
             console.error('Error:', error);
         }
@@ -162,6 +165,36 @@
             })
             .catch(error => console.error('Error:', error));
     }
+    function escapeHTML(text) {
+        return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function fetchInitialCounts() {
+        const filters = [
+            { id: 'all-count', endpoint: '/get_email_count' },
+            { id: 'inbound-count', endpoint: '/get_email_count_inbound' },
+            { id: 'outbound-count', endpoint: '/get_email_count_outbound' },
+            { id: 'scammer-count', endpoint: '/get_email_count_scammer' },
+            { id: 'archived-count', endpoint: '/get_email_count_archived' },
+            { id: 'handled-count', endpoint: '/get_email_count_handled' },
+            { id: 'queued-count', endpoint: '/get_email_count_queued' },
+        ];
+
+        filters.forEach(filter => {
+            fetchEmailCount(1, filter.endpoint, filter.id);
+        });
+    }
+    function fetchEmailCount(currentPage = 1, endpoint = `/get_email_count`, filterId) {
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+                const totalEmails = data.total_emails;
+                if (filterId && document.getElementById(filterId)) {
+                    document.getElementById(filterId).textContent = `(${totalEmails})`;
+                }
+                renderPagination(currentPage, totalEmails);
+            })
+            .catch(error => console.error('Error:', error));
+    }
     function loadInboxPages(page = 1, endpoint = `/get_all_emails_pages`) {
         endpoint += `?page=${page}`;
         fetch(endpoint)
@@ -173,9 +206,12 @@
                     const noDataRow = emailsTableBody.insertRow();
                     noDataRow.innerHTML = `<td colspan="13" class="text-center">No data available for this filter.</td>`;
                 } else {
+                    let totalEmails = emails.length;
                     emails.forEach(email => {
                         const row = emailsTableBody.insertRow();
+                        const countDisplay = totalEmails--;
                         row.innerHTML = `
+                        <td>${countDisplay}</td>
                         <td>${email.id}</td>
                         <td>${email.from_email.substring(0, 10)}...</td>
                         <td>${email.to_email.substring(0, 10)}...</td>
@@ -203,8 +239,8 @@
                                 ${Boolean(Number(email.is_queued)) ? 'Queued' : ''}
                             </p>
                             <p><strong style="text-decoration: underline;">Date:</strong> ${email.date} <strong style="text-decoration: underline;">Time:</strong> ${email.time}</p>
-                            <p><strong style="text-decoration: underline;">Subject:</strong> ${email.subject}</p>
-                            <p><strong style="text-decoration: underline;">Body:</strong><br> ${email.body}</p>
+                            <p><strong style="text-decoration: underline;">Subject:</strong> ${escapeHTML(email.subject)}</p>
+                            <p><strong style="text-decoration: underline;">Body:</strong><br> ${escapeHTML(email.body)}</p>
                             
                         `;
                             $('#emailModal').modal('show');
@@ -217,25 +253,66 @@
                 if (document.getElementById('loading-message')) { document.getElementById('loading-message').remove(); }
                 console.error('Error:', error)
             });
-        fetchEmailCount(page);
+        if (endpoint === '/get_all_emails_pages') {
+            fetchEmailCount(page, '/get_email_count');
+        } else if (endpoint === '/get_inbound_emails_pages') {
+            fetchEmailCount(page, '/get_email_count_inbound');
+        } else if (endpoint === '/get_outbound_emails_pages') {
+            fetchEmailCount(page, '/get_email_count_outbound');
+        } else if (endpoint === '/get_scammer_emails_pages') {
+            fetchEmailCount(page, '/get_email_count_scammer');
+        } else if (endpoint === '/get_archived_emails_pages') {
+            fetchEmailCount(page, '/get_email_count_archived');
+        } else if (endpoint === '/get_handled_emails_pages') {
+            fetchEmailCount(page, '/get_email_count_handled');
+        } else if (endpoint === '/get_queued_emails_pages') {
+            fetchEmailCount(page, '/get_email_count_queued');
+        }
     }
     function applyFilters() {
-        let selectedFilter = document.querySelector('input[name="emailFilter"]:checked').value;
-        let endpoint = '/get_all_emails_pages'; // Default to all emails
-        if (selectedFilter === 'inbound') {
+        currentFilter = document.querySelector('input[name="emailFilter"]:checked').value;
+        updateEndpointAndLoad(currentFilter);
+    }
+    function updateEndpointAndLoad(filterValue) {
+        let endpoint = constructEndpoint(filterValue);
+        let countEndpoint = constructCountEndpoint(filterValue); // Construct the correct endpoint for counting emails
+        let countSpanId = filterValue + '-count';
+        fetchEmailCount(1, countEndpoint, countSpanId);
+        loadInboxPages(1, endpoint);
+    }
+    function constructCountEndpoint(filterValue) {
+        let endpoint = '/get_email_count'; // Default count endpoint
+        if (filterValue === 'inbound') {
+            endpoint = '/get_email_count_inbound';
+        } else if (filterValue === 'outbound') {
+            endpoint = '/get_email_count_outbound';
+        } else if (filterValue === 'scammer') {
+            endpoint = '/get_email_count_scammer';
+        } else if (filterValue === 'archived') {
+            endpoint = '/get_email_count_archived';
+        } else if (filterValue === 'handled') {
+            endpoint = '/get_email_count_handled';
+        } else if (filterValue === 'queued') {
+            endpoint = '/get_email_count_queued';
+        }
+        return endpoint;
+    }
+    function constructEndpoint(filterValue) {
+        let endpoint = '/get_all_emails_pages'; // Default to all emails.
+        if (filterValue === 'inbound') {
             endpoint = '/get_inbound_emails_pages';
-        } else if (selectedFilter === 'outbound') {
+        } else if (filterValue === 'outbound') {
             endpoint = '/get_outbound_emails_pages';
-        } else if (selectedFilter === 'scammer') {
+        } else if (filterValue === 'scammer') {
             endpoint = '/get_scammer_emails_pages';
-        } else if (selectedFilter === 'archived') {
+        } else if (filterValue === 'archived') {
             endpoint = '/get_archived_emails_pages';
-        } else if (selectedFilter === 'handled') {
+        } else if (filterValue === 'handled') {
             endpoint = '/get_handled_emails_pages';
-        } else if (selectedFilter === 'queued') {
+        } else if (filterValue === 'queued') {
             endpoint = '/get_queued_emails_pages';
         }
-        loadInboxPages(page = 1, endpoint = endpoint);
+        return endpoint;
     }
     function escapeCSVField(field) {
         if (typeof field !== 'string') {
@@ -340,11 +417,12 @@
             a.innerText = text;
             a.addEventListener('click', function (e) {
                 e.preventDefault();
-                loadInboxPages(pageNum);
+                loadInboxPages(pageNum, constructEndpoint(currentFilter));
             });
             li.appendChild(a);
             paginationUl_1.appendChild(li);
         };
+
         if (currentPage > 1) {
             addPageItem(1, 'First');
             addPageItem(currentPage - 1, 'Previous');
@@ -380,15 +458,6 @@
             addPageItem(currentPage + 1, 'Next');
             addPageItem(totalPages, 'Last');
         }
-    }
-    function fetchEmailCount(currentPage = 1) {
-        fetch('/get_email_count')
-            .then(response => response.json())
-            .then(data => {
-                const totalEmails = data.total_emails;
-                renderPagination(currentPage, totalEmails);
-            })
-            .catch(error => console.error('Error:', error));
     }
 </script>
 {% endblock %}

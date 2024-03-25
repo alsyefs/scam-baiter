@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from globals import SCAMMERS_EMAILS_FILE_PATH
 from database.scammers_table import ScammersDatabaseManager
 import json
@@ -95,6 +95,24 @@ def get_stored_info(addr, scam_email) -> Optional[StoredInfo]:
     except Exception as e:
         log.error(f"Error in get_stored_info: {e}")
         return None
+
+def get_all_stored_info() -> List[dict]:
+    all_stored_info = []  # List to hold dictionaries
+    try:
+        with open(SCAMMERS_EMAILS_FILE_PATH, "r", encoding="utf8") as f:
+            d = json.load(f)
+        
+        for addr, obj in d.items():
+            # Optionally add 'addr' to the dictionary if needed
+            obj['addr'] = addr
+            obj["to"] = obj["to"]
+            obj["strategy"] = obj["strategy"]
+            obj["username"] = obj["username"]
+            obj["summary_context"] = obj["summary_context"]
+            all_stored_info.append(obj)
+    except Exception as e:
+        log.error(f"Error in get_all_stored_info: {e}")    
+    return all_stored_info
 
 def store_scammer_database(scammer_email_address, scammer_email_summary_context, baiter_email_address, baiter_username, baiter_email_strategy):
     try:

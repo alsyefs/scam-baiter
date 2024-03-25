@@ -27,9 +27,9 @@ from database.scammers_table import ScammersDatabaseManager
 mymodel = GPT_MODEL
 def main(crawl=True):
     log.info(f"Starting cron job with crawling {'enabled' if crawl else 'disabled'}")
-    if crawl:
-        crawler.fetch_all()
-        log.info("Crawling done")
+    # if crawl:
+    #     crawler.fetch_all()
+    #     log.info("Crawling done")
     email_filenames = os.listdir(MAIL_QUEUED_DIR)
     count = 0
     log.info(f"Handling {len(email_filenames)} emails")
@@ -118,7 +118,6 @@ def store_sent_email_database(email_from, email_to, email_subject, email_body):
         )
     except Exception as e:
         log.error(f"Error while inserting email into database: {e}")
-
 def remove_queued_flag(email_from, email_to, email_subject, email_body):
     try:
         email_id = EmailsDatabaseManager.get_email_id_by_email_address_and_subject_and_body(email_from, email_to, email_subject, email_body)
@@ -126,8 +125,6 @@ def remove_queued_flag(email_from, email_to, email_subject, email_body):
         log.info(f"Removed email with ID ({email_id}) from the queue.")
     except Exception as e:
         log.error(f"Error while removing queued flag: {e}")
-
-
 def create_lock_file():
     try:
         with open("./lock", "w") as f:
@@ -140,8 +137,7 @@ def delete_lock_file():
         try:
             os.remove(lock_file_path)
         except Exception as e:
-            log.error(f"Error deleting lock file: {e}")
-        
+            log.error(f"Error deleting lock file: {e}")       
 cleanup_executed = False
 def cleanup():
     global cleanup_executed
@@ -164,7 +160,6 @@ def handle_sigterm(*args):
         sys.exit(1)
     else:
         sys.exit(0)
-
 def prepare_main(crawl=True):
     log.info("--------------------- Start of cron job -------------------")
     signal.signal(signal.SIGTERM, handle_sigterm)

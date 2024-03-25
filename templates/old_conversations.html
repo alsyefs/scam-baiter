@@ -58,7 +58,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTableData();
     fetchDataCount();
 });
-
+function escapeHTML(text) {
+    return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 function loadTableData(page = 1, endpoint = `/select_all_pages`) {
     endpoint += `?page=${page}`;
     fetch(endpoint)
@@ -86,8 +88,8 @@ function loadTableData(page = 1, endpoint = `/select_all_pages`) {
                         document.querySelector('#oldConversationsModal .modal-body').innerHTML = `
                             <p><strong style="text-decoration: underline;">ID:</strong> ${conversation.id}</p>
                             <p><strong style="text-decoration: underline;">File name:</strong> ${conversation.file_name} --- <strong style="text-decoration: underline;">Strategy:</strong> ${conversation.strategy}</p>
-                            <p><strong style="text-decoration: underline;">Inbound message: (${conversation.inbound_time}) </strong><br> ${conversation.inbound_message}</p>
-                            <p><strong style="text-decoration: underline;">Outbound message: (${conversation.outbound_time}) </strong><br> ${conversation.outbound_message}</p>
+                            <p><strong style="text-decoration: underline;">Inbound message: (${conversation.inbound_time}) </strong><br> ${escapeHTML(conversation.inbound_message)}</p>
+                            <p><strong style="text-decoration: underline;">Outbound message: (${conversation.outbound_time}) </strong><br> ${escapeHTML(conversation.outbound_message)}</p>
                         `;
                         $('#oldConversationsModal').modal('show');
                     });
