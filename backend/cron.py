@@ -13,13 +13,14 @@ import atexit
 import signal
 from globals import (MAIL_QUEUED_DIR, MAIL_HANDLED_DIR, MAX_TOKENS, GPT_MODEL,
                      MAX_EMAILS_TO_HANDLE, EMAILS_DIRECTORY,
-                     INVALID_EMAIL_LIST)
+                     INVALID_EMAIL_LIST, ABSTRACT_API_KEY)
 import tiktoken
 import emailing_service
 import responder
 import solution_manager
 from archiver import archive
 import crawler
+import requests
 from logs import LogManager
 log = LogManager.get_logger()
 from database.emails_table import EmailsDatabaseManager
@@ -55,9 +56,13 @@ def main(crawl=True):
                     subject = "Re: " + subject
                 scam_email = email_obj["from"]
                 if not valid_email_deliverability(scam_email):
-                        log.info(f"Scammer email {scam_email} is not deliverable. Skipping this email.")
-                        os.remove(email_path)
-                        continue
+                    log.info(f"Scammer email {scam_email} is not deliverable. Skipping this email.")
+                    os.remove(email_path)
+                    continue
+                if not check_email_deliverability_by_abstract_api(scam_email):
+                    log.info(f"Scammer email {scam_email} is not deliverable. Skipping this email. Email deliverability check by Abstract API failed for email: {scam_email}.")
+                    os.remove(email_path)
+                    continue
                 if "bait_email" not in email_obj:
                     if solution_manager.scam_exists(scam_email):
                         log.info("This crawled email has been replied to. Ignored")
@@ -114,6 +119,42 @@ def valid_email_deliverability(email=""):
             if email == entry['address'] and entry['result'] != 'deliverable':
                 return False
     return True
+
+def check_email_deliverability_by_abstract_api(email_to_check=""):
+    if not email_to_check:
+        log.error("Attempted to check email deliverability by Abstract API but email address was empty.")
+        return False
+    url = f"https://emailvalidation.abstractapi.com/v1/?api_key={ABSTRACT_API_KEY}&email={email_to_check}"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            deliverable = data.get("deliverability") == "DELIVERABLE"
+            is_valid_format = data.get("is_valid_format", {}).get("value", False)
+            is_free_email = data.get("is_free_email", {}).get("value", False)
+            is_disposable_email = not data.get("is_disposable_email", {}).get("value", True)
+            is_role_email = not data.get("is_role_email", {}).get("value", True)
+            is_catchall_email = not data.get("is_catchall_email", {}).get("value", True)
+            is_mx_found = data.get("is_mx_found", {}).get("value", False)
+            is_smtp_valid = data.get("is_smtp_valid", {}).get("value", False)
+            conditions_met = all([
+                deliverable,
+                is_valid_format,
+                # is_free_email,
+                is_disposable_email,
+                # is_role_email,
+                # is_catchall_email,
+                is_mx_found,
+                is_smtp_valid
+            ])
+            return conditions_met
+        else:
+            log.error(f"Abstract API request failed with status code: {response.status_code}")
+            return False
+    except Exception as e:
+        log.error(f"An error occurred when check email deliverability by Abstract API: {e}")
+        return False
+    
 def store_sent_email_database(email_from, email_to, email_subject, email_body):
     try:
         EmailsDatabaseManager.insert_email(

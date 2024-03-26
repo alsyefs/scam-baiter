@@ -53,3 +53,4 @@ gevent
 gevent-websocket
 greenlet
 assemblyai
+sendgrid

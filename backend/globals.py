@@ -7,8 +7,9 @@ from secret import (
     DEFAULT_SUPER_ADMIN_PASSWORD, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
     TWILIO_PHONE_NUMBERS, DEFAULT_USER_USERNAME,
     DEFAULT_USER_PASSWORD, DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD,
-    MAILGUN_TARGET_EMAIL_TEST, ELEVENLABS_API_KEY, DOMAIN_NAME,
-    ASSEMBLYAI_API_KEY
+    TARGET_EMAIL_TEST, ELEVENLABS_API_KEY, DOMAIN_NAME,
+    ASSEMBLYAI_API_KEY, SENDGRID_API_KEY, SENDGRID_DOMAIN_NAME,
+    ABSTRACT_API_KEY
 )
 # from models.tts.phone_call_script_data import (PROMPT_KEYWORDS, RESPONSE_SENTENCES)
 import logging
@@ -45,7 +46,7 @@ DEFAULT_USER_USERNAME = DEFAULT_USER_USERNAME
 DEFAULT_USER_PASSWORD = DEFAULT_USER_PASSWORD
 
 # MAIL handling
-MAX_EMAILS_TO_HANDLE = 6  # number of replies per cron run
+MAX_EMAILS_TO_HANDLE = 4  # number of replies per cron run
 EMAILS_DIRECTORY = os.path.join(BASE_DIR, "emails")  # root directory for all emails
 MAIL_QUEUED_DIR = os.path.join(BASE_DIR, "emails", "queued")  # crawled and received emails
 MAIL_ARCHIVE_DIR = os.path.join(BASE_DIR, "emails", "archive")  # archive
@@ -56,7 +57,7 @@ SENT_MAIL = os.path.join(BASE_DIR, "emails", "sent")  # emails sent
 READ_INBOX = os.path.join(BASE_DIR, "emails", "read")  # emails read
 UNREAD_INBOX = os.path.join(BASE_DIR, "emails", "unread")  # new emails
 EMAIL_TEMPLATE = os.path.join(BASE_DIR, "emailing_service", "template.html")  # email template
-MAILGUN_TARGET_EMAIL_TEST = MAILGUN_TARGET_EMAIL_TEST  # Email for testing to be removed in production.
+TARGET_EMAIL_TEST = TARGET_EMAIL_TEST  # Email for testing to be removed in production.
 
 
 EMAIL_ARCHIVED_CLEANED_DIR = os.path.join(BASE_DIR, "emails", "archive_cleaned")
@@ -107,7 +108,7 @@ OLD_COVERSATIONS_CSV = os.path.join(BASE_DIR, "data", "old_conversations.csv")
 # Crawling handling
 CRAWLER_PROG_DIR = os.path.join(BASE_DIR, "cache")  # has crawled cache
 MAX_PAGE_SL = 2  # max page for scammer list
-MAX_PAGE_SS = 3  # max page for scammer sites
+MAX_PAGE_SS = 5  # max page for scammer sites
 
 # MAILGUN (For sending and receiving emails)
 MAILGUN_API_KEY = MAILGUN_API_KEY
@@ -116,6 +117,13 @@ MAILGUN_SMTP_PORT = 587
 MAILGUN_API_BASE_URL = 'https://api.mailgun.net/v3'
 MAILGUN_DOMAIN_NAME = MAILGUN_DOMAIN_NAME  # This is the domain name setup for Mailgun which can be similar to the web application domain name.
 DOMAIN_NAME = DOMAIN_NAME  # This is the domain name for the web application.
+
+# Abstrat API: To check emails before sending an email
+ABSTRACT_API_KEY = ABSTRACT_API_KEY
+
+# SendGrid for email sending and receiving, if not needed, leave the variables empty:
+SENDGRID_API_KEY = SENDGRID_API_KEY
+SENDGRID_DOMAIN_NAME = SENDGRID_DOMAIN_NAME
 
 # Twilio (For making phone calls)
 TWILIO_ACCOUNT_SID = TWILIO_ACCOUNT_SID
@@ -146,7 +154,7 @@ ELEVENLABS_PREMADE_VOICES = os.path.join(BASE_DIR, "elevenlabs", "elevenlabs_voi
 # # MAILGUN for email sending and receiving:
 # MAILGUN_API_KEY = ""
 # MAILGUN_DOMAIN_NAME = ""  # This is the domain name setup for Mailgun which can be similar to the web application domain name.
-# MAILGUN_TARGET_EMAIL_TEST = ""  # Email for testing when sending emails to be removed in production.
+# TARGET_EMAIL_TEST = ""  # Email for testing when sending emails to be removed in production.
 
 # # Twilio for phone calls, if not needed, leave the variables empty:
 # TWILIO_ACCOUNT_SID = ""
