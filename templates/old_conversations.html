@@ -59,7 +59,15 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchDataCount();
 });
 function escapeHTML(text) {
-    return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    let map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+        '\n': '<br>'
+    };
+    return text.replace(/[&<>"'\n]/g, function(m) { return map[m]; });
 }
 function loadTableData(page = 1, endpoint = `/select_all_pages`) {
     endpoint += `?page=${page}`;

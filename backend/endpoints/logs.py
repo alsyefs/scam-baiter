@@ -121,5 +121,5 @@ def get_logs_count():
         else:
             return jsonify({'error': 'No log level provided.'}), 400
     except Exception as e:
-        log.error(f"An error occurred: {str(e)}". traceback.format_exc())
+        log.error(f"An error occurred: {str(e)}. Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Internal server error.'}), 500

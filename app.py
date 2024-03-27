@@ -1,5 +1,5 @@
 import sys
-from flask import Flask, jsonify, request, render_template, session
+from flask import Flask, jsonify, request, render_template, session, make_response, g
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 import os
@@ -65,6 +65,18 @@ db_models.init_app(app)
 nest_asyncio.apply()
 app.logger.setLevel(LOGGING_LEVEL)
 app.logger.propagate = True
+
+# class CustomHeaderMiddleware:
+#     def __init__(self, app):
+#         self.app = app
+#     def __call__(self, environ, start_response):
+#         def custom_start_response(status, headers, exc_info=None):
+#             headers = [header for header in headers if header[0].lower() != 'server']  # Remove any existing 'Server' headers
+#             # headers.remove(('Content-Length', '0'))  # Remove any 'Content-Length' headers
+#             headers.append(('Server', 'Apache/2.4.29 (Windows) OpenSSL/1.1.0g PHP/7.2.3'))  # Add custom 'Server' header
+#             return start_response(status, headers, exc_info)
+#         return self.app(environ, custom_start_response)
+# app.wsgi_app = CustomHeaderMiddleware(app.wsgi_app)  # Apply the middleware to the app
 
 def delete_file(file_path):
     try:
@@ -150,6 +162,35 @@ def fill_old_conversations():
         log.info("old_conversations table filled.")
     except Exception as e:
         log.error(f"An error occurred while filling OldConversationsDatabaseManager: {e}")
+def initialize_app():
+    with app.app_context():
+        db_models.create_all()
+        initialize_default_roles()
+        initialize_default_users()
+        settings_db_manager.create_table()
+        emails_db_manager.create_table()
+        scammers_db_manager.create_table()
+        gpt_db_manager.create_table()
+        calls_db_manager.create_table()
+        sms_db_manager.create_table()
+        fill_old_conversations()
+@app.before_request
+def before_request():  # Store request details in Flask's g object for logging purposes
+    g.direct_ip = request.remote_addr
+    g.forwarded_ip = request.headers.get('X-Forwarded-For')
+    g.requested_endpoint = request.path
+    g.user_agent = request.headers.get('User-Agent', 'Unknown')
+    g.query_string = request.query_string.decode("utf-8")
+    g.method = request.method
+    g.accept_language = request.headers.get('Accept-Language', 'Unknown')
+    g.accept_encoding = request.headers.get('Accept-Encoding', 'Unknown')
+    g.form_data = request.form.to_dict()
+    g.json_data = request.get_json(silent=True)
+    g.cookies = request.cookies.to_dict()
+    g.referer = request.headers.get('Referer', 'Unknown')
+    g.content_type = request.headers.get('Content-Type', 'Unknown')
+
+
 @app.route('/')
 def index():
     user_roles = []
@@ -161,9 +202,9 @@ def index():
         return render_template('index.html', user_roles=user_roles)
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
-        log.error(error_message)
-        log.error("", traceback.format_exc())
-        return error_message
+        log.error(f"{error_message}. Traceback: {traceback.format_exc()}")
+        # return error_message
+        return make_response(error_message, 500)
 @app.route("/favicon.ico")
 def favicon():
     return ""
@@ -177,15 +218,13 @@ def about():
                 user_roles = [role.name for role in user.roles]
         return render_template('about.html', user_roles=user_roles)
     except Exception as e:
-        log.error("An error occurred: %s", str(e))
-        log.error("", traceback.format_exc())
+        log.error(f"An error occurred: {str(e)}. Traceback: {traceback.format_exc()}")
 @app.route("/get_support_email")
 def get_support_email():
     try:
         return jsonify({'support_email': f"support@{MAILGUN_DOMAIN_NAME}"})
     except Exception as e:
-        log.error("An error occurred: %s", str(e))
-        log.error("", traceback.format_exc())
+        log.error(f"An error occurred: {str(e)}. Traceback: {traceback.format_exc()}")
 @app.route("/get_domain")
 def get_domain():
     try:
@@ -193,22 +232,47 @@ def get_domain():
     except Exception as e:
         log.error("An error occurred: %s", str(e))
         log.error("", traceback.format_exc())
-def initialize_app():
-    with app.app_context():
-        db_models.create_all()
-        initialize_default_roles()
-        initialize_default_users()
-        settings_db_manager.create_table()
-        emails_db_manager.create_table()
-        scammers_db_manager.create_table()
-        gpt_db_manager.create_table()
-        calls_db_manager.create_table()
-        sms_db_manager.create_table()
-        fill_old_conversations()
+@app.errorhandler(500)
+def internal_error(error):
+    log.error(f"An internal server error occurred: {str(error)}. Traceback: {traceback.format_exc()}")
+    return render_template('500_error.html'), 500
+
+@app.after_request
+def after_request(response):  # Retrieve request details from Flask's g object
+    if 400 <= response.status_code < 600:  # Check if the response status code indicates an error
+        direct_ip = getattr(g, 'direct_ip', 'Unknown')
+        forwarded_ip = getattr(g, 'forwarded_ip', 'None')
+        requested_endpoint = getattr(g, 'requested_endpoint', 'Unknown')
+        user_agent = getattr(g, 'user_agent', 'Unknown')
+        query_string = getattr(g, 'query_string', 'Unknown')
+        method = getattr(g, 'method', 'Unknown')
+        accept_language = getattr(g, 'accept_language', 'Unknown')
+        accept_encoding = getattr(g, 'accept_encoding', 'Unknown')
+        form_data = getattr(g, 'form_data', 'Unknown')
+        json_data = getattr(g, 'json_data', 'Unknown')
+        cookies = getattr(g, 'cookies', 'Unknown')
+        referer = getattr(g, 'referer', 'Unknown')
+        content_type = getattr(g, 'content_type', 'Unknown')
+        log.debug(f"""Request to ({requested_endpoint})
+                Direct IP: ({direct_ip})
+                Forwarded IP: ({forwarded_ip})
+                Response Status: ({response.status_code})
+                User-Agent: ({user_agent})
+                Query string: ({query_string})
+                Method: ({method})
+                Accept language: ({accept_language})
+                Accept encoding: ({accept_encoding})
+                Form data: ({form_data})
+                JSON data: ({json_data})
+                Cookies: ({cookies})
+                Referer: ({referer})
+                Content type: ({content_type}).""")
+    return response
 @app.after_request
 def apply_caching(response):
-    response.headers["ngrok-skip-browser-warning"] = "true"
+    response.headers.pop("Server", None)
     return response
+
 def mark_is_handled_if_sent():  # To fix the issue of emails not being marked as handled after being sent.
     try:
         EmailsDatabaseManager.mark_email_as_handled_by_email_id() # Mark all email as handled if sent.

@@ -222,7 +222,7 @@ def clear_password():
             user.password_hash = generate_password_hash(new_password)
             user.updated = datetime.utcnow()
             db_models.session.commit()
-            log.warning(f"Password cleared for user ('){user.username}).")
+            log.warning(f"Password cleared for user ({user.username}).")
             flash('Password updated successfully!', 'success')
         else:
             flash('User not found.', 'danger')

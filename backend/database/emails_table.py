@@ -65,6 +65,9 @@ class EmailsDatabaseManager:
     ######################## START: Insert data ###############################
     @staticmethod
     def insert_email(from_email, to_email, subject, body, is_inbound, is_outbound, is_archived=0, is_handled=0, is_queued=0, is_scammer=0, replied_from=''):
+        if not '@' in from_email or not '@' in to_email:
+            log.error(f"Error inserting email: Required fields are empty. From: ({from_email}), To: ({to_email}).")
+            return
         now = datetime.now()
         formatted_date = now.strftime("%Y-%m-%d")
         formatted_time = now.strftime("%H:%M:%S.%f")[:-3]

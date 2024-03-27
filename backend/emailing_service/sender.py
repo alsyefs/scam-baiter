@@ -10,34 +10,31 @@ from database.emails_table import EmailsDatabaseManager
 from logs import LogManager
 log = LogManager.get_logger()
 
-def send_email(username, address, target, subject, text):
+# def send_email(username, address, target, subject, text):  # SendGrid API
+#     # target = TARGET_EMAIL_TEST  # Email for testing to be removed in production.
+#     with open(EMAIL_TEMPLATE, "r") as f:
+#         template = f.read()
+#     message = Mail(
+#         from_email=f"{username} <{address}>",
+#         to_emails=target,
+#         subject=str(subject),
+#         html_content=template.replace("{{{content}}}", text).replace("\n", "<br>"))
+#     try:
+#         sg = SendGridAPIClient(SENDGRID_API_KEY)
+#         response = sg.send(message)
+#         if response.status_code != 202:
+#             log.error(f"(SendGrid) Failed to send email from email: {address}, to email: {target} , {response.body}")
+#             return False
+#         log.info(f"(SendGrid) Email sent successfully from email: {address}, to email: {target}")
+#     except Exception as e:
+#         log.error(f"(SendGrid) Failed to send email from email: {address}, to email: {target} , {e.message}")
+#         return False
+#     store_sent_email_database(address, target, str(subject), text)
+#     return True
+
+
+def send_email(username, address, target, subject, text):  # Mailgun API
     # target = TARGET_EMAIL_TEST  # Email for testing to be removed in production.
-    with open(EMAIL_TEMPLATE, "r") as f:
-        template = f.read()
-    message = Mail(
-        from_email=f"{username} <{address}>",
-        to_emails=target,
-        subject=str(subject),
-        html_content=template.replace("{{{content}}}", text).replace("\n", "<br>"))
-    try:
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
-        # print(response.status_code)
-        # print(response.body)
-        # print(response.headers)
-        if response.status_code != 202:
-            log.error(f"(SendGrid) Failed to send email from email: {address}, to email: {target} , {response.body}")
-            return False
-        log.info(f"(SendGrid) Email sent successfully from email: {address}, to email: {target}")
-    except Exception as e:
-        log.error(f"(SendGrid) Failed to send email from email: {address}, to email: {target} , {e.message}")
-        return False
-    store_sent_email_database(address, target, str(subject), text)
-    return True
-
-
-def send_email2(username, address, target, subject, text):
-    target = TARGET_EMAIL_TEST  # Email for testing to be removed in production.
     with open(EMAIL_TEMPLATE, "r") as f:
         template = f.read()
     try:
@@ -49,11 +46,11 @@ def send_email2(username, address, target, subject, text):
                 "subject": str(subject),
                 "html": template.replace("{{{content}}}", text).replace("\n", "<br>")})
         if not ("Queued." in res.text):
-            log.error(f"Failed to send email from email: {address}, to email: {target} , {res.text}")
+            log.error(f"(Mailgun) Failed to send email from email: {address}, to email: {target} , {res.text}")
             return False
-        log.info(f"Email sent successfully from email: {address}, to email: {target}")
+        log.info(f"(Mailgun) Email sent successfully from email: {address}, to email: {target}")
     except Exception as e:
-        log.error(f"Error while sending email: {e}")
+        log.error(f"(Mailgun) Error while sending email: {e}")
         return False
     store_sent_email_database(address, target, str(subject), text)
     return True

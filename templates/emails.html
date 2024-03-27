@@ -166,7 +166,15 @@
             .catch(error => console.error('Error:', error));
     }
     function escapeHTML(text) {
-        return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        let map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;',
+            '\n': '<br>'
+        };
+        return text.replace(/[&<>"'\n]/g, function(m) { return map[m]; });
     }
     function fetchInitialCounts() {
         const filters = [

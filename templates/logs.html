@@ -94,8 +94,19 @@ function loadLogsPages(page=1) {
     });
     fetchLogsCount(page);
 }
-function escapeHTML(text) {
+function escapeHTML2(text) {
     return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function escapeHTML(text) {
+    let map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+        '\n': '<br>'
+    };
+    return text.replace(/[&<>"'\n]/g, function(m) { return map[m]; });
 }
 function populateTable(logs) {
     var logTableBody = document.getElementById('log-table-body');

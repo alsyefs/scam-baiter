@@ -84,7 +84,15 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchGPTCount();
 });
 function escapeHTML(text) {
-    return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    let map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+        '\n': '<br>'
+    };
+    return text.replace(/[&<>"'\n]/g, function(m) { return map[m]; });
 }
 function loadGPTsPages(page = 1, endpoint = `/select_all_gpt_interactions_pages`) {
     endpoint += `?page=${page}`;
